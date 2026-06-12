@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ApplicationNote extends Model
 {
-    protected $fillable = ['application_id', 'person_id', 'created_by', 'visibility', 'note'];
+    protected $fillable = ['application_id', 'person_id', 'created_by', 'note_type', 'visibility', 'note'];
 
     public function application()
     {

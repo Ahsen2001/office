@@ -10,6 +10,8 @@ use App\Http\Controllers\DepartmentOfficer\ApplicationProcessingController;
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboardController;
 use App\Http\Controllers\Manager\ExportController;
 use App\Http\Controllers\Manager\ReportController;
+use App\Http\Controllers\NoteController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\AppointmentController;
@@ -30,6 +32,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
 });
 
 Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -57,6 +63,7 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
     Route::get('/people/{person}/qr/download', [QrBarcodeController::class, 'downloadQr'])->name('people.qr.download');
     Route::get('/people/{person}/barcode/download', [QrBarcodeController::class, 'downloadBarcode'])->name('people.barcode.download');
     Route::post('/people/{person}/documents', [DocumentController::class, 'storeForPerson'])->name('people.documents.store');
+    Route::post('/people/{person}/notes', [NoteController::class, 'storeForPerson'])->name('people.notes.store');
     Route::get('/people/{person}', [PersonController::class, 'show'])->name('people.show');
 
     Route::get('/scanner', [QrBarcodeController::class, 'scanner'])->name('scanner.index');
@@ -74,7 +81,8 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
 
     Route::post('/applications/{application}/documents', [DocumentController::class, 'store'])->name('documents.store');
     Route::post('/applications/{application}/payments', [PaymentController::class, 'store'])->name('payments.store');
-    Route::post('/applications/{application}/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+    Route::post('/applications/{application}/appointments', [AppointmentController::class, 'storeForApplication'])->name('appointments.store');
+    Route::post('/applications/{application}/notes', [NoteController::class, 'storeForApplication'])->name('applications.notes.store');
 
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
@@ -86,6 +94,22 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
     Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
     Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
     Route::get('/payments/{payment}/receipt/pdf', [PaymentController::class, 'receiptPdf'])->name('payments.receipt.pdf');
+
+    Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+    Route::get('/appointments/calendar', [AppointmentController::class, 'calendar'])->name('appointments.calendar');
+    Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
+    Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.general.store');
+    Route::get('/appointments/{appointment}', [AppointmentController::class, 'show'])->name('appointments.show');
+    Route::get('/appointments/{appointment}/edit', [AppointmentController::class, 'edit'])->name('appointments.edit');
+    Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+    Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.status');
+    Route::patch('/appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
+    Route::patch('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+
+    Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');
+    Route::get('/notes/{note}/edit', [NoteController::class, 'edit'])->name('notes.edit');
+    Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update');
+    Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
 });
 
 Route::middleware(['auth', 'active', 'role:admin,department_officer'])->prefix('officer')->name('officer.')->group(function () {
@@ -93,12 +117,14 @@ Route::middleware(['auth', 'active', 'role:admin,department_officer'])->prefix('
     Route::get('/applications', [ApplicationProcessingController::class, 'index'])->name('applications.index');
     Route::get('/applications/{application}', [ApplicationProcessingController::class, 'show'])->name('applications.show');
     Route::patch('/applications/{application}/status', [ApplicationProcessingController::class, 'updateStatus'])->name('applications.status');
-    Route::post('/applications/{application}/notes', [ApplicationProcessingController::class, 'addNote'])->name('applications.notes.store');
+    Route::post('/applications/{application}/notes', [NoteController::class, 'storeForApplication'])->name('applications.notes.store');
 });
 
 Route::middleware(['auth', 'active', 'role:admin,manager'])->prefix('manager')->name('manager.')->group(function () {
     Route::get('/dashboard', ManagerDashboardController::class)->name('dashboard');
-    Route::get('/reports/dashboard', [ReportController::class, 'dashboard'])->name('reports.dashboard');
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/dashboard', [ReportController::class, 'index'])->name('reports.dashboard');
+    Route::get('/reports/export/{report}/{format}', [ReportController::class, 'export'])->name('reports.export');
     Route::get('/exports/applications.pdf', [ExportController::class, 'applicationsPdf'])->name('exports.applications.pdf');
     Route::get('/exports/applications.xlsx', [ExportController::class, 'applicationsExcel'])->name('exports.applications.excel');
 });

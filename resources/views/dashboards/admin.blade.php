@@ -16,6 +16,7 @@
                 ['label' => 'Services', 'value' => $services, 'icon' => 'fa-briefcase'],
                 ['label' => 'Staff', 'value' => $staff, 'icon' => 'fa-users'],
                 ['label' => 'Today Applications', 'value' => $todayApplications, 'icon' => 'fa-calendar-day'],
+                ['label' => "Today's Appointments", 'value' => $todayAppointments, 'icon' => 'fa-calendar-check'],
             ];
         @endphp
 
@@ -101,6 +102,26 @@
                             </div>
                         @empty
                             <div class="text-muted">No pending tasks.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4">
+            <div class="card soft-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 mb-0">Upcoming Appointments</h2>
+                        <a href="{{ route('staff.appointments.index') }}" class="btn btn-sm btn-outline-primary">View</a>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @forelse ($recentAppointments as $appointment)
+                            <div class="list-group-item px-0">
+                                <div class="fw-semibold">{{ $appointment->appointment_no }}</div>
+                                <div class="text-muted small">{{ $appointment->person?->full_name }} - {{ $appointment->appointment_date?->format('Y-m-d') }} {{ $appointment->start_time?->format('H:i') }}</div>
+                            </div>
+                        @empty
+                            <div class="text-muted">No upcoming appointments.</div>
                         @endforelse
                     </div>
                 </div>

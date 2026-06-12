@@ -69,6 +69,12 @@
                 <h2 class="h5 mb-3">Internal Notes</h2>
                 <form method="POST" action="{{ route('officer.applications.notes.store', $application) }}" class="mb-3">
                     @csrf
+                    <input type="text" name="note_type" class="form-control mb-2" value="department_review" required>
+                    <select name="visibility" class="form-select mb-2" required>
+                        <option value="department">Department only</option>
+                        <option value="internal">Internal only</option>
+                        <option value="public">Public visible</option>
+                    </select>
                     <textarea name="note" rows="3" class="form-control mb-2" placeholder="Add internal note" required></textarea>
                     <button class="btn btn-outline-primary w-100">Add Note</button>
                 </form>

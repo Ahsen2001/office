@@ -12,6 +12,7 @@ use App\Models\Person;
 use App\Models\Service;
 use App\Models\ServiceApplication;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -76,6 +77,19 @@ class ServiceApplicationController extends Controller
 
             $application = ServiceApplication::create($data);
             $this->recordStatusHistory($application, null, $status->id, $request->user()->id, 'Application created.');
+            $application->loadMissing(['assignedOfficer', 'service', 'department']);
+            app(NotificationService::class)->assignedOfficer(
+                $application,
+                'New application assigned',
+                "{$application->application_no} was submitted for {$application->department?->name}.",
+                'new_application_submitted'
+            );
+            app(NotificationService::class)->managers(
+                'New application submitted',
+                "{$application->application_no} was submitted for {$application->service?->name}.",
+                'new_application_submitted',
+                $application
+            );
 
             return $application;
         });
@@ -122,7 +136,9 @@ class ServiceApplicationController extends Controller
         $application->update($data);
 
         if ((int) $oldStatusId !== (int) $data['status_id']) {
+            $status = ApplicationStatus::findOrFail($data['status_id']);
             $this->recordStatusHistory($application, $oldStatusId, (int) $data['status_id'], $request->user()->id, $data['remarks'] ?? null);
+            $this->notifyStatusChange($application->fresh(['assignedOfficer', 'status', 'service']), $status);
         }
 
         return redirect()->route('staff.applications.show', $application)->with('success', 'Application updated successfully.');
@@ -151,6 +167,7 @@ class ServiceApplicationController extends Controller
         ] + $timestamps);
 
         $this->recordStatusHistory($application, $oldStatusId, $status->id, $request->user()->id, $data['remarks'] ?? null);
+        $this->notifyStatusChange($application->fresh(['assignedOfficer', 'status', 'service']), $status);
 
         return back()->with('success', 'Application status updated successfully.');
     }
@@ -215,6 +232,24 @@ class ServiceApplicationController extends Controller
             'remarks' => $remarks,
             'changed_at' => now(),
         ]);
+    }
+
+    private function notifyStatusChange(ServiceApplication $application, ApplicationStatus $status): void
+    {
+        $type = match ($status->code) {
+            'waiting_for_documents' => 'missing_document_requested',
+            'completed' => 'application_completed',
+            'rejected' => 'application_rejected',
+            default => 'application_status_changed',
+        };
+
+        $message = "{$application->application_no} status changed to {$status->name}.";
+
+        app(NotificationService::class)->assignedOfficer($application, 'Application status changed', $message, $type);
+
+        if (in_array($status->code, ['completed', 'rejected', 'waiting_for_documents'], true)) {
+            app(NotificationService::class)->managers('Application status changed', $message, $type, $application);
+        }
     }
 
     private function missingRequiredDocuments(ServiceApplication $application): array

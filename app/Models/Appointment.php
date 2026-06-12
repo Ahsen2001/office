@@ -26,7 +26,11 @@ class Appointment extends Model
 
     protected function casts(): array
     {
-        return ['appointment_date' => 'date'];
+        return [
+            'appointment_date' => 'date',
+            'start_time' => 'datetime:H:i',
+            'end_time' => 'datetime:H:i',
+        ];
     }
 
     public function application()
@@ -42,5 +46,15 @@ class Appointment extends Model
     public function officer()
     {
         return $this->belongsTo(User::class, 'officer_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\Appointment;
 use App\Models\Person;
 use App\Models\Service;
 use App\Models\ServiceApplication;
@@ -46,6 +47,8 @@ class DashboardController extends Controller
             'services' => Service::count(),
             'staff' => User::whereHas('roles', fn ($query) => $query->where('slug', 'staff'))->count(),
             'todayApplications' => ServiceApplication::whereDate('submitted_at', today())->count(),
+            'todayAppointments' => Appointment::whereDate('appointment_date', today())->count(),
+            'recentAppointments' => Appointment::with(['person', 'department', 'officer'])->whereDate('appointment_date', '>=', today())->orderBy('appointment_date')->orderBy('start_time')->limit(6)->get(),
             'monthlyApplications' => $monthlyApplications,
             'departmentApplications' => $departmentApplications,
             'recentApplications' => ServiceApplication::with(['person', 'service', 'department', 'status'])->latest()->limit(6)->get(),

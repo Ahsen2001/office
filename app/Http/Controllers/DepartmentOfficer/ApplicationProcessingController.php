@@ -7,6 +7,7 @@ use App\Models\ApplicationNote;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationStatusHistory;
 use App\Models\ServiceApplication;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -89,6 +90,8 @@ class ApplicationProcessingController extends Controller
             'changed_at' => now(),
         ]);
 
+        $this->notifyStatusChange($application->fresh(['assignedOfficer', 'status', 'service']), $status);
+
         return back()->with('success', 'Application updated successfully.');
     }
 
@@ -144,5 +147,23 @@ class ApplicationProcessingController extends Controller
             ->reject(fn ($document) => $uploadedDocuments->contains(strtolower($document)))
             ->values()
             ->all();
+    }
+
+    private function notifyStatusChange(ServiceApplication $application, ApplicationStatus $status): void
+    {
+        $type = match ($status->code) {
+            'waiting_for_documents' => 'missing_document_requested',
+            'completed' => 'application_completed',
+            'rejected' => 'application_rejected',
+            default => 'application_status_changed',
+        };
+
+        $message = "{$application->application_no} status changed to {$status->name}.";
+
+        app(NotificationService::class)->assignedOfficer($application, 'Application status changed', $message, $type);
+
+        if (in_array($status->code, ['completed', 'rejected', 'waiting_for_documents'], true)) {
+            app(NotificationService::class)->managers('Application status changed', $message, $type, $application);
+        }
     }
 }

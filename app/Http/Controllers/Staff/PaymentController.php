@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\ServiceApplication;
+use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -59,6 +60,19 @@ class PaymentController extends Controller
             'payment_date' => $paymentDate,
             'paid_at' => $data['status'] === 'paid' ? $paymentDate : null,
         ]);
+
+        app(NotificationService::class)->assignedOfficer(
+            $application->loadMissing('assignedOfficer'),
+            'Payment added',
+            "{$payment->receipt_no} was added to {$application->application_no}.",
+            'payment_added'
+        );
+        app(NotificationService::class)->managers(
+            'Payment added',
+            "{$payment->receipt_no} was added to {$application->application_no}.",
+            'payment_added',
+            $application
+        );
 
         return redirect()->route('staff.payments.show', $payment)->with('success', 'Payment saved successfully.');
     }

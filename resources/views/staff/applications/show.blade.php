@@ -2,9 +2,9 @@
 @section('title', $application->application_no)
 @section('page-title', 'Application Details')
 @section('content')
-<div class="d-flex flex-wrap justify-content-between gap-2 mb-4">
+    <div class="d-flex flex-wrap justify-content-between gap-2 mb-4">
     <div><h1 class="h3 mb-1">{{ $application->application_no }}</h1><div class="text-muted">{{ $application->person?->full_name }} - {{ $application->service?->name }}</div></div>
-    <div class="d-flex gap-2"><a class="btn btn-outline-primary" href="{{ route('staff.applications.edit', $application) }}">Edit</a><a class="btn btn-success" href="{{ route('staff.applications.receipt', $application) }}">Print Receipt</a></div>
+    <div class="d-flex gap-2"><a class="btn btn-outline-primary" href="{{ route('staff.applications.edit', $application) }}">Edit</a><a class="btn btn-outline-secondary" href="{{ route('staff.appointments.create', ['application_id' => $application->id]) }}">Book Appointment</a><a class="btn btn-success" href="{{ route('staff.applications.receipt', $application) }}">Print Receipt</a></div>
 </div>
 <div class="row g-4">
     <div class="col-lg-8">
@@ -20,6 +20,33 @@
                 <div class="col-12"><div class="text-muted small">Description</div>{{ $application->description }}</div>
                 <div class="col-12"><div class="text-muted small">Remarks</div>{{ $application->remarks }}</div>
             </div>
+        </div></div>
+
+        <div class="card soft-card mb-4"><div class="card-body">
+            <h2 class="h5 mb-3">Notes and Remarks</h2>
+            <form method="POST" action="{{ route('staff.applications.notes.store', $application) }}" class="border rounded p-3 mb-3">
+                @csrf
+                <div class="row g-2">
+                    <div class="col-md-3"><input type="text" name="note_type" class="form-control" value="general" required></div>
+                    <div class="col-md-3">
+                        <select name="visibility" class="form-select" required>
+                            <option value="internal">Internal only</option>
+                            <option value="department">Department only</option>
+                            <option value="public">Public visible</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4"><input type="text" name="note" class="form-control" placeholder="Note message" required></div>
+                    <div class="col-md-2"><button class="btn btn-primary w-100">Add Note</button></div>
+                </div>
+            </form>
+            @forelse($application->notes as $note)
+                <div class="border-bottom py-2">
+                    {{ $note->note }}
+                    <div class="text-muted small">{{ ucwords(str_replace('_', ' ', $note->note_type)) }} | {{ ucwords(str_replace('_', ' ', $note->visibility)) }} | {{ $note->creator?->name }}</div>
+                </div>
+            @empty
+                <div class="text-muted">No notes recorded.</div>
+            @endforelse
         </div></div>
 
         <div class="card soft-card mb-4"><div class="card-body">

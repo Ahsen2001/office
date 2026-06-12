@@ -7,7 +7,11 @@
         ['label' => 'People', 'icon' => 'fa-address-card', 'route' => 'staff.people.index'],
         ['label' => 'QR Scanner', 'icon' => 'fa-camera', 'route' => 'staff.scanner.index'],
         ['label' => 'Applications', 'icon' => 'fa-folder-open', 'route' => 'staff.applications.index'],
-        ['label' => 'Reports', 'icon' => 'fa-chart-line', 'route' => 'manager.dashboard'],
+        ['label' => 'Appointments', 'icon' => 'fa-calendar-check', 'route' => 'staff.appointments.index'],
+        ['label' => 'Documents', 'icon' => 'fa-file-lines', 'route' => 'staff.documents.index'],
+        ['label' => 'Payments', 'icon' => 'fa-money-bill-wave', 'route' => 'staff.payments.index'],
+        ['label' => 'Notes', 'icon' => 'fa-note-sticky', 'route' => 'staff.notes.index'],
+        ['label' => 'Reports', 'icon' => 'fa-chart-line', 'route' => 'manager.reports.index'],
     ];
 @endphp
 

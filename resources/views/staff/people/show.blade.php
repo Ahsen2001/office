@@ -46,7 +46,7 @@
         <a href="#documents" class="btn btn-outline-secondary"><i class="fa-solid fa-upload me-1"></i>Upload Document</a>
         <a href="#notes" class="btn btn-outline-secondary"><i class="fa-solid fa-note-sticky me-1"></i>Add Note</a>
         <a href="#payments" class="btn btn-outline-secondary"><i class="fa-solid fa-money-bill-wave me-1"></i>Add Payment</a>
-        <a href="#appointments" class="btn btn-outline-secondary"><i class="fa-solid fa-calendar-plus me-1"></i>Book Appointment</a>
+        <a href="{{ route('staff.appointments.create', ['person_id' => $person->id]) }}" class="btn btn-outline-secondary"><i class="fa-solid fa-calendar-plus me-1"></i>Book Appointment</a>
         <button onclick="window.print()" class="btn btn-outline-success"><i class="fa-solid fa-print me-1"></i>Print Profile</button>
         <a href="{{ route('staff.people.report', $person) }}" class="btn btn-outline-dark"><i class="fa-solid fa-file-arrow-down me-1"></i>Download Report</a>
     </div>
@@ -164,8 +164,26 @@
                 <div class="col-lg-6" id="notes">
                     <div class="card soft-card h-100"><div class="card-body">
                         <h2 class="h5 mb-3">Notes and Remarks</h2>
+                        <form method="POST" action="{{ route('staff.people.notes.store', $person) }}" class="no-print border rounded p-3 mb-3">
+                            @csrf
+                            <div class="row g-2">
+                                <div class="col-md-6"><input type="text" name="note_type" class="form-control form-control-sm" value="general" required></div>
+                                <div class="col-md-6">
+                                    <select name="visibility" class="form-select form-select-sm" required>
+                                        <option value="internal">Internal only</option>
+                                        <option value="department">Department only</option>
+                                        <option value="public">Public visible</option>
+                                    </select>
+                                </div>
+                                <div class="col-12"><textarea name="note" rows="2" class="form-control form-control-sm" placeholder="Note message" required></textarea></div>
+                                <div class="col-12"><button class="btn btn-sm btn-primary w-100">Add Note</button></div>
+                            </div>
+                        </form>
                         @forelse($person->applicationNotes as $note)
-                            <div class="border-bottom py-2">{{ $note->note }} <div class="text-muted small">{{ $note->creator?->name }}</div></div>
+                            <div class="border-bottom py-2">
+                                {{ $note->note }}
+                                <div class="text-muted small">{{ ucwords(str_replace('_', ' ', $note->note_type)) }} | {{ ucwords(str_replace('_', ' ', $note->visibility)) }} | {{ $note->creator?->name }}</div>
+                            </div>
                         @empty <div class="text-muted">{{ $person->notes ?: 'No notes recorded.' }}</div> @endforelse
                     </div></div>
                 </div>
