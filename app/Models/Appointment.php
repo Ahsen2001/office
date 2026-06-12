@@ -28,4 +28,19 @@ class Appointment extends Model
     {
         return ['appointment_date' => 'date'];
     }
+
+    public function application()
+    {
+        return $this->belongsTo(ServiceApplication::class, 'application_id');
+    }
+
+    public function person()
+    {
+        return $this->belongsTo(Person::class);
+    }
+
+    public function officer()
+    {
+        return $this->belongsTo(User::class, 'officer_id');
+    }
 }

@@ -28,4 +28,24 @@ class ApplicationDocument extends Model
     {
         return ['verified_at' => 'datetime'];
     }
+
+    public function application()
+    {
+        return $this->belongsTo(ServiceApplication::class, 'application_id');
+    }
+
+    public function person()
+    {
+        return $this->belongsTo(Person::class);
+    }
+
+    public function documentType()
+    {
+        return $this->belongsTo(DocumentType::class);
+    }
+
+    public function uploader()
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
 }

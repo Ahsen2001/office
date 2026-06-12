@@ -26,4 +26,19 @@ class Payment extends Model
             'paid_at' => 'datetime',
         ];
     }
+
+    public function application()
+    {
+        return $this->belongsTo(ServiceApplication::class, 'application_id');
+    }
+
+    public function person()
+    {
+        return $this->belongsTo(Person::class);
+    }
+
+    public function method()
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+    }
 }

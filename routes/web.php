@@ -53,6 +53,7 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
     Route::get('/people/{person}/edit', [PersonController::class, 'edit'])->name('people.edit');
     Route::put('/people/{person}', [PersonController::class, 'update'])->name('people.update');
     Route::get('/people/{person}/card', [PersonController::class, 'card'])->name('people.card');
+    Route::get('/people/{person}/report', [PersonController::class, 'report'])->name('people.report');
     Route::get('/people/{person}/qr/download', [QrBarcodeController::class, 'downloadQr'])->name('people.qr.download');
     Route::get('/people/{person}/barcode/download', [QrBarcodeController::class, 'downloadBarcode'])->name('people.barcode.download');
     Route::get('/people/{person}', [PersonController::class, 'show'])->name('people.show');
@@ -62,7 +63,12 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
     Route::get('/scan/{code}', [QrBarcodeController::class, 'show'])->name('codes.scan');
 
     Route::get('/applications', [ServiceApplicationController::class, 'index'])->name('applications.index');
+    Route::get('/applications/create', [ServiceApplicationController::class, 'create'])->name('applications.create');
     Route::post('/applications', [ServiceApplicationController::class, 'store'])->name('applications.store');
+    Route::get('/applications/{application}/edit', [ServiceApplicationController::class, 'edit'])->name('applications.edit');
+    Route::put('/applications/{application}', [ServiceApplicationController::class, 'update'])->name('applications.update');
+    Route::patch('/applications/{application}/status', [ServiceApplicationController::class, 'updateStatus'])->name('applications.status');
+    Route::get('/applications/{application}/receipt', [ServiceApplicationController::class, 'receipt'])->name('applications.receipt');
     Route::get('/applications/{application}', [ServiceApplicationController::class, 'show'])->name('applications.show');
 
     Route::post('/applications/{application}/documents', [DocumentController::class, 'store'])->name('documents.store');
@@ -73,7 +79,9 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
 Route::middleware(['auth', 'active', 'role:admin,department_officer'])->prefix('officer')->name('officer.')->group(function () {
     Route::get('/dashboard', OfficerDashboardController::class)->name('dashboard');
     Route::get('/applications', [ApplicationProcessingController::class, 'index'])->name('applications.index');
+    Route::get('/applications/{application}', [ApplicationProcessingController::class, 'show'])->name('applications.show');
     Route::patch('/applications/{application}/status', [ApplicationProcessingController::class, 'updateStatus'])->name('applications.status');
+    Route::post('/applications/{application}/notes', [ApplicationProcessingController::class, 'addNote'])->name('applications.notes.store');
 });
 
 Route::middleware(['auth', 'active', 'role:admin,manager'])->prefix('manager')->name('manager.')->group(function () {

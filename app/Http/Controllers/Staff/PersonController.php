@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\Person;
 use App\Services\CodeGeneratorService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -68,9 +69,7 @@ class PersonController extends Controller
 
     public function show(Person $person): View
     {
-        return view('staff.people.show', [
-            'person' => $person->load(['registrar', 'applications.service', 'applications.department', 'applications.status']),
-        ]);
+        return view('staff.people.show', $this->profileData($person));
     }
 
     public function edit(Person $person): View
@@ -107,6 +106,14 @@ class PersonController extends Controller
     public function card(Person $person): View
     {
         return view('staff.people.card', compact('person'));
+    }
+
+    public function report(Person $person)
+    {
+        $data = $this->profileData($person);
+
+        return Pdf::loadView('staff.people.report', $data)
+            ->download($person->person_code.'-profile-report.pdf');
     }
 
     private function validated(Request $request, ?Person $person = null): array
@@ -149,5 +156,35 @@ class PersonController extends Controller
         } while (Person::withTrashed()->where('person_code', $code)->exists());
 
         return $code;
+    }
+
+    private function profileData(Person $person): array
+    {
+        $person->load([
+            'registrar',
+            'documents.documentType',
+            'payments.method',
+            'appointments.officer',
+            'applicationNotes.creator',
+            'applications.service',
+            'applications.department',
+            'applications.status',
+            'applications.statusHistories.toStatus',
+            'applications.statusHistories.changedBy',
+        ]);
+
+        $statusCounts = $person->applications
+            ->groupBy(fn ($application) => $application->status?->code)
+            ->map->count();
+
+        return [
+            'person' => $person,
+            'totalApplications' => $person->applications->count(),
+            'pendingApplications' => $person->applications->filter(fn ($application) => in_array($application->status?->code, ['submitted', 'pending', 'under_review', 'processing', 'waiting_for_documents'], true))->count(),
+            'completedApplications' => $statusCounts['completed'] ?? 0,
+            'rejectedApplications' => $statusCounts['rejected'] ?? 0,
+            'paidTotal' => $person->payments->where('status', 'paid')->sum('amount'),
+            'pendingPaymentTotal' => $person->payments->where('status', 'pending')->sum('amount'),
+        ];
     }
 }

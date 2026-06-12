@@ -20,6 +20,7 @@ class ServiceApplication extends Model
         'priority',
         'subject',
         'description',
+        'required_documents',
         'total_fee',
         'due_date',
         'submitted_at',
@@ -28,12 +29,14 @@ class ServiceApplication extends Model
         'completed_at',
         'cancelled_at',
         'rejection_reason',
+        'remarks',
     ];
 
     protected function casts(): array
     {
         return [
             'total_fee' => 'decimal:2',
+            'required_documents' => 'array',
             'due_date' => 'date',
             'submitted_at' => 'datetime',
             'approved_at' => 'datetime',
@@ -86,5 +89,15 @@ class ServiceApplication extends Model
     public function appointments()
     {
         return $this->hasMany(Appointment::class, 'application_id');
+    }
+
+    public function notes()
+    {
+        return $this->hasMany(ApplicationNote::class, 'application_id');
+    }
+
+    public function submitter()
+    {
+        return $this->belongsTo(User::class, 'submitted_by');
     }
 }
