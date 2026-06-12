@@ -71,7 +71,21 @@ class DocumentController extends Controller
     {
         [$disk] = $this->storedFile($document);
 
-        return Storage::disk($disk)->download($document->file_path, $document->file_name);
+        $stream = Storage::disk($disk)->readStream($document->file_path);
+
+        if ($stream === false) {
+            abort(404, 'Document file not found.');
+        }
+
+        return response()->streamDownload(function () use ($stream) {
+            try {
+                fpassthru($stream);
+            } finally {
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }
+        }, $document->file_name, ['Content-Type' => $document->mime_type]);
     }
 
     public function destroy(ApplicationDocument $document): RedirectResponse

@@ -108,7 +108,7 @@ class UserController extends Controller
 
     public function deactivate(User $user): RedirectResponse
     {
-        abort_if($user->is(auth()->user()), 422, 'You cannot deactivate your own account.');
+        abort_if($user->id === auth()->id(), 422, 'You cannot deactivate your own account.');
 
         $user->update(['is_active' => false]);
         AuditLogger::log('deactivate', 'users', "Deactivated user {$user->email}.", $user, ['is_active' => true], ['is_active' => false], request());
