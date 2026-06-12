@@ -1,0 +1,108 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
+use App\Models\Department;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\View\View;
+
+class UserController extends Controller
+{
+    public function index(): View
+    {
+        return view('admin.users.index', [
+            'users' => User::with(['department', 'roles'])->latest()->paginate(15),
+        ]);
+    }
+
+    public function create(): View
+    {
+        return view('admin.users.create', [
+            'user' => new User(['is_active' => true]),
+            'roles' => Role::where('is_active', true)->orderBy('name')->get(),
+            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
+            'selectedRoles' => [],
+        ]);
+    }
+
+    public function store(StoreUserRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        $user = User::create([
+            'department_id' => $validated['department_id'] ?? null,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'password' => Hash::make($validated['password']),
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        $user->roles()->sync($validated['roles']);
+
+        return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
+    }
+
+    public function edit(User $user): View
+    {
+        return view('admin.users.edit', [
+            'user' => $user->load('roles'),
+            'roles' => Role::where('is_active', true)->orderBy('name')->get(),
+            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
+            'selectedRoles' => $user->roles->pluck('id')->all(),
+        ]);
+    }
+
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        $user->fill([
+            'department_id' => $validated['department_id'] ?? null,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        if (! empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+        $user->roles()->sync($validated['roles']);
+
+        return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
+    }
+
+    public function destroy(User $user): RedirectResponse
+    {
+        abort_if($user->is(auth()->user()), 422, 'You cannot delete your own account.');
+
+        $user->delete();
+
+        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
+    }
+
+    public function activate(User $user): RedirectResponse
+    {
+        $user->update(['is_active' => true]);
+
+        return back()->with('success', 'User activated successfully.');
+    }
+
+    public function deactivate(User $user): RedirectResponse
+    {
+        abort_if($user->is(auth()->user()), 422, 'You cannot deactivate your own account.');
+
+        $user->update(['is_active' => false]);
+
+        return back()->with('success', 'User deactivated successfully.');
+    }
+}

@@ -63,6 +63,21 @@ class User extends Authenticatable
 
     public function hasRole(string ...$roles): bool
     {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->pluck('slug')->intersect($roles)->isNotEmpty();
+        }
+
         return $this->roles()->whereIn('slug', $roles)->exists();
+    }
+
+    public function primaryDashboardRoute(): string
+    {
+        return match (true) {
+            $this->hasRole('admin') => 'admin.dashboard',
+            $this->hasRole('staff') => 'staff.dashboard',
+            $this->hasRole('department_officer') => 'officer.dashboard',
+            $this->hasRole('manager') => 'manager.dashboard',
+            default => 'dashboard',
+        };
     }
 }
