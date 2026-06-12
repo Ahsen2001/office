@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationStatusHistory;
 use App\Models\Department;
+use App\Models\DocumentType;
+use App\Models\PaymentMethod;
 use App\Models\Person;
 use App\Models\Service;
 use App\Models\ServiceApplication;
@@ -92,13 +94,18 @@ class ServiceApplicationController extends Controller
                 'status',
                 'documents.documentType',
                 'payments.method',
+                'payments.receiver',
                 'appointments.officer',
                 'notes.creator',
                 'statusHistories.fromStatus',
                 'statusHistories.toStatus',
                 'statusHistories.changedBy',
+                'statusHistories.department',
             ]),
             'statuses' => ApplicationStatus::orderBy('sort_order')->get(),
+            'documentTypes' => DocumentType::where('is_active', true)->orderBy('name')->get(),
+            'paymentMethods' => PaymentMethod::where('is_active', true)->orderBy('name')->get(),
+            'missingRequiredDocuments' => $this->missingRequiredDocuments($application),
         ]);
     }
 
@@ -201,11 +208,30 @@ class ServiceApplicationController extends Controller
     {
         ApplicationStatusHistory::create([
             'application_id' => $application->id,
+            'department_id' => $application->department_id,
             'from_status_id' => $fromStatusId,
             'to_status_id' => $toStatusId,
             'changed_by' => $userId,
             'remarks' => $remarks,
             'changed_at' => now(),
         ]);
+    }
+
+    private function missingRequiredDocuments(ServiceApplication $application): array
+    {
+        $requiredDocuments = collect($application->required_documents ?? [])
+            ->map(fn ($document) => trim((string) $document))
+            ->filter()
+            ->values();
+
+        $uploadedDocuments = $application->documents
+            ->map(fn ($document) => strtolower((string) ($document->documentType?->name ?? $document->document_title)))
+            ->filter()
+            ->values();
+
+        return $requiredDocuments
+            ->reject(fn ($document) => $uploadedDocuments->contains(strtolower($document)))
+            ->values()
+            ->all();
     }
 }

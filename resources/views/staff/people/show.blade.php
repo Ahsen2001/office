@@ -125,8 +125,31 @@
                 <div class="col-lg-6" id="documents">
                     <div class="card soft-card h-100"><div class="card-body">
                         <h2 class="h5 mb-3">Documents</h2>
+                        <form method="POST" action="{{ route('staff.people.documents.store', $person) }}" enctype="multipart/form-data" class="no-print border rounded p-3 mb-3">
+                            @csrf
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <select name="document_type_id" class="form-select form-select-sm" required>
+                                        <option value="">Document type</option>
+                                        @foreach($documentTypes as $documentType)
+                                            <option value="{{ $documentType->id }}">{{ $documentType->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6"><input type="text" name="document_title" class="form-control form-control-sm" placeholder="Document title"></div>
+                                <div class="col-md-8"><input type="file" name="document" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required></div>
+                                <div class="col-md-4"><button class="btn btn-sm btn-primary w-100">Upload Document</button></div>
+                                <div class="col-12"><input type="text" name="remarks" class="form-control form-control-sm" placeholder="Remarks"></div>
+                            </div>
+                        </form>
                         @forelse($person->documents as $document)
-                            <div class="border-bottom py-2">{{ $document->documentType?->name ?? $document->file_name }} <span class="badge text-bg-secondary">{{ $document->status }}</span></div>
+                            <div class="border-bottom py-2 d-flex justify-content-between gap-2">
+                                <div>{{ $document->document_title ?? $document->documentType?->name ?? $document->file_name }} <span class="badge text-bg-secondary">{{ $document->status }}</span></div>
+                                <div class="text-nowrap no-print">
+                                    <a href="{{ route('staff.documents.preview', $document) }}" class="btn btn-sm btn-outline-secondary">Preview</a>
+                                    <a href="{{ route('staff.documents.download', $document) }}" class="btn btn-sm btn-outline-primary">Download</a>
+                                </div>
+                            </div>
                         @empty <div class="text-muted">No documents uploaded.</div> @endforelse
                     </div></div>
                 </div>

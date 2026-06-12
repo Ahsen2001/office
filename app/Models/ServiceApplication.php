@@ -73,7 +73,7 @@ class ServiceApplication extends Model
 
     public function statusHistories()
     {
-        return $this->hasMany(ApplicationStatusHistory::class, 'application_id');
+        return $this->hasMany(ApplicationStatusHistory::class, 'application_id')->oldest('changed_at');
     }
 
     public function documents()

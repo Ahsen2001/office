@@ -10,10 +10,12 @@ class Payment extends Model
         'receipt_no',
         'application_id',
         'person_id',
+        'service_id',
         'payment_method_id',
         'received_by',
         'amount',
         'status',
+        'payment_date',
         'transaction_reference',
         'remarks',
         'paid_at',
@@ -23,6 +25,7 @@ class Payment extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'payment_date' => 'datetime',
             'paid_at' => 'datetime',
         ];
     }
@@ -40,5 +43,15 @@ class Payment extends Model
     public function method()
     {
         return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
+
+    public function receiver()
+    {
+        return $this->belongsTo(User::class, 'received_by');
     }
 }

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ApplicationStatusHistory extends Model
 {
-    protected $fillable = ['application_id', 'from_status_id', 'to_status_id', 'changed_by', 'remarks', 'changed_at'];
+    protected $fillable = ['application_id', 'department_id', 'from_status_id', 'to_status_id', 'changed_by', 'remarks', 'changed_at'];
 
     protected function casts(): array
     {
@@ -16,6 +16,11 @@ class ApplicationStatusHistory extends Model
     public function application()
     {
         return $this->belongsTo(ServiceApplication::class, 'application_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function fromStatus()

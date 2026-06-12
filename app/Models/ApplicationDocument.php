@@ -13,13 +13,16 @@ class ApplicationDocument extends Model
         'application_id',
         'person_id',
         'document_type_id',
+        'document_title',
         'uploaded_by',
         'verified_by',
         'file_name',
         'file_path',
+        'file_type',
         'mime_type',
         'file_size',
         'status',
+        'remarks',
         'verification_remarks',
         'verified_at',
     ];
@@ -47,5 +50,10 @@ class ApplicationDocument extends Model
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function verifier()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 }

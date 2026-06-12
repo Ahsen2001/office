@@ -56,6 +56,7 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
     Route::get('/people/{person}/report', [PersonController::class, 'report'])->name('people.report');
     Route::get('/people/{person}/qr/download', [QrBarcodeController::class, 'downloadQr'])->name('people.qr.download');
     Route::get('/people/{person}/barcode/download', [QrBarcodeController::class, 'downloadBarcode'])->name('people.barcode.download');
+    Route::post('/people/{person}/documents', [DocumentController::class, 'storeForPerson'])->name('people.documents.store');
     Route::get('/people/{person}', [PersonController::class, 'show'])->name('people.show');
 
     Route::get('/scanner', [QrBarcodeController::class, 'scanner'])->name('scanner.index');
@@ -74,6 +75,17 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
     Route::post('/applications/{application}/documents', [DocumentController::class, 'store'])->name('documents.store');
     Route::post('/applications/{application}/payments', [PaymentController::class, 'store'])->name('payments.store');
     Route::post('/applications/{application}/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
+    Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/report/pdf', [PaymentController::class, 'reportPdf'])->name('payments.report.pdf');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+    Route::get('/payments/{payment}/receipt/pdf', [PaymentController::class, 'receiptPdf'])->name('payments.receipt.pdf');
 });
 
 Route::middleware(['auth', 'active', 'role:admin,department_officer'])->prefix('officer')->name('officer.')->group(function () {

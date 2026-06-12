@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\DocumentType;
 use App\Models\Person;
 use App\Services\CodeGeneratorService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -184,7 +185,8 @@ class PersonController extends Controller
             'completedApplications' => $statusCounts['completed'] ?? 0,
             'rejectedApplications' => $statusCounts['rejected'] ?? 0,
             'paidTotal' => $person->payments->where('status', 'paid')->sum('amount'),
-            'pendingPaymentTotal' => $person->payments->where('status', 'pending')->sum('amount'),
+            'pendingPaymentTotal' => $person->payments->whereIn('status', ['unpaid', 'partially_paid'])->sum('amount'),
+            'documentTypes' => DocumentType::where('is_active', true)->orderBy('name')->get(),
         ];
     }
 }

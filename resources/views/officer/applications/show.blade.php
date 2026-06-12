@@ -21,8 +21,17 @@
 
             <div class="card soft-card mb-4"><div class="card-body">
                 <h2 class="h5 mb-3">Uploaded Documents</h2>
+                @if(count($missingRequiredDocuments))
+                    <div class="alert alert-warning py-2"><strong>Missing required documents:</strong> {{ implode(', ', $missingRequiredDocuments) }}</div>
+                @endif
                 @forelse($application->documents as $document)
-                    <div class="border-bottom py-2">{{ $document->documentType?->name ?? $document->file_name }} <span class="badge text-bg-secondary">{{ $document->status }}</span></div>
+                    <div class="border-bottom py-2 d-flex justify-content-between gap-2">
+                        <div>{{ $document->document_title ?? $document->documentType?->name ?? $document->file_name }} <span class="badge text-bg-secondary">{{ $document->status }}</span></div>
+                        <div class="text-nowrap">
+                            <a href="{{ route('staff.documents.preview', $document) }}" class="btn btn-sm btn-outline-secondary">Preview</a>
+                            <a href="{{ route('staff.documents.download', $document) }}" class="btn btn-sm btn-outline-primary">Download</a>
+                        </div>
+                    </div>
                 @empty <div class="text-muted">No documents uploaded.</div> @endforelse
             </div></div>
 
@@ -30,7 +39,11 @@
                 <h2 class="h5 mb-3">Timeline</h2>
                 <div class="timeline">
                     @forelse($application->statusHistories as $history)
-                        <div class="timeline-item"><div class="fw-semibold">{{ $history->toStatus?->name }}</div><div class="text-muted small">{{ $history->changed_at?->format('Y-m-d H:i') }} by {{ $history->changedBy?->name }}</div><div>{{ $history->remarks }}</div></div>
+                        <div class="timeline-item">
+                            <div class="fw-semibold">{{ $history->fromStatus?->name ?? 'New' }} to {{ $history->toStatus?->name }}</div>
+                            <div class="text-muted small">{{ $history->changed_at?->format('Y-m-d H:i') }} by {{ $history->changedBy?->name }} | {{ $history->department?->name ?? $application->department?->name }}</div>
+                            <div>{{ $history->remarks }}</div>
+                        </div>
                     @empty <div class="text-muted">No timeline entries.</div> @endforelse
                 </div>
             </div></div>

@@ -47,8 +47,10 @@ class ApplicationProcessingController extends Controller
                 'statusHistories.fromStatus',
                 'statusHistories.toStatus',
                 'statusHistories.changedBy',
+                'statusHistories.department',
             ]),
             'statuses' => ApplicationStatus::whereIn('code', $this->allowedStatuses())->orderBy('sort_order')->get(),
+            'missingRequiredDocuments' => $this->missingRequiredDocuments($application),
         ]);
     }
 
@@ -79,6 +81,7 @@ class ApplicationProcessingController extends Controller
 
         ApplicationStatusHistory::create([
             'application_id' => $application->id,
+            'department_id' => $application->department_id,
             'from_status_id' => $oldStatusId,
             'to_status_id' => $status->id,
             'changed_by' => $request->user()->id,
@@ -123,5 +126,23 @@ class ApplicationProcessingController extends Controller
             'rejected',
             'completed',
         ];
+    }
+
+    private function missingRequiredDocuments(ServiceApplication $application): array
+    {
+        $requiredDocuments = collect($application->required_documents ?? [])
+            ->map(fn ($document) => trim((string) $document))
+            ->filter()
+            ->values();
+
+        $uploadedDocuments = $application->documents
+            ->map(fn ($document) => strtolower((string) ($document->documentType?->name ?? $document->document_title)))
+            ->filter()
+            ->values();
+
+        return $requiredDocuments
+            ->reject(fn ($document) => $uploadedDocuments->contains(strtolower($document)))
+            ->values()
+            ->all();
     }
 }
