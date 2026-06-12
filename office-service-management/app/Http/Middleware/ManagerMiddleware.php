@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ManagerMiddleware extends RoleMiddleware
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         return parent::handle($request, $next, 'manager');
     }

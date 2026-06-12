@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Department extends Model
 {
-    protected $fillable = ['code', 'name', 'phone', 'email', 'description', 'is_active'];
+    protected $fillable = ['code', 'name', 'phone', 'email', 'location', 'department_officer_id', 'description', 'is_active'];
 
     protected function casts(): array
     {
@@ -26,5 +26,10 @@ class Department extends Model
     public function applications()
     {
         return $this->hasMany(ServiceApplication::class);
+    }
+
+    public function officer()
+    {
+        return $this->belongsTo(User::class, 'department_officer_id');
     }
 }

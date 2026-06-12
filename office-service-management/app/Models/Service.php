@@ -11,7 +11,9 @@ class Service extends Model
         'code',
         'name',
         'description',
+        'required_documents',
         'fee_amount',
+        'processing_time_days',
         'estimated_days',
         'requires_appointment',
         'requires_payment',
@@ -22,6 +24,7 @@ class Service extends Model
     {
         return [
             'fee_amount' => 'decimal:2',
+            'required_documents' => 'array',
             'requires_appointment' => 'boolean',
             'requires_payment' => 'boolean',
             'is_active' => 'boolean',

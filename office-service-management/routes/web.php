@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DepartmentController as AdminDepartmentController;
+use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\DepartmentOfficer\DashboardController as OfficerDashboardController;
@@ -35,6 +37,10 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::resource('users', AdminUserController::class)->except(['show']);
     Route::patch('/users/{user}/activate', [AdminUserController::class, 'activate'])->name('users.activate');
     Route::patch('/users/{user}/deactivate', [AdminUserController::class, 'deactivate'])->name('users.deactivate');
+    Route::resource('departments', AdminDepartmentController::class)->except(['show']);
+    Route::patch('/departments/{department}/activate', [AdminDepartmentController::class, 'activate'])->name('departments.activate');
+    Route::patch('/departments/{department}/deactivate', [AdminDepartmentController::class, 'deactivate'])->name('departments.deactivate');
+    Route::resource('services', AdminServiceController::class)->except(['show']);
 });
 
 Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name('staff.')->group(function () {
