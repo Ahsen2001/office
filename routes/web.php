@@ -41,16 +41,25 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::patch('/departments/{department}/activate', [AdminDepartmentController::class, 'activate'])->name('departments.activate');
     Route::patch('/departments/{department}/deactivate', [AdminDepartmentController::class, 'deactivate'])->name('departments.deactivate');
     Route::resource('services', AdminServiceController::class)->except(['show']);
+    Route::delete('/people/{person}', [PersonController::class, 'destroy'])->name('people.destroy');
+    Route::patch('/people/{person}/codes/regenerate', [QrBarcodeController::class, 'regenerate'])->name('people.codes.regenerate');
 });
 
 Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name('staff.')->group(function () {
     Route::get('/dashboard', StaffDashboardController::class)->name('dashboard');
     Route::get('/people', [PersonController::class, 'index'])->name('people.index');
+    Route::get('/people/create', [PersonController::class, 'create'])->name('people.create');
     Route::post('/people', [PersonController::class, 'store'])->name('people.store');
+    Route::get('/people/{person}/edit', [PersonController::class, 'edit'])->name('people.edit');
+    Route::put('/people/{person}', [PersonController::class, 'update'])->name('people.update');
+    Route::get('/people/{person}/card', [PersonController::class, 'card'])->name('people.card');
+    Route::get('/people/{person}/qr/download', [QrBarcodeController::class, 'downloadQr'])->name('people.qr.download');
+    Route::get('/people/{person}/barcode/download', [QrBarcodeController::class, 'downloadBarcode'])->name('people.barcode.download');
     Route::get('/people/{person}', [PersonController::class, 'show'])->name('people.show');
 
+    Route::get('/scanner', [QrBarcodeController::class, 'scanner'])->name('scanner.index');
+    Route::get('/scanner/resolve', [QrBarcodeController::class, 'resolve'])->name('scanner.resolve');
     Route::get('/scan/{code}', [QrBarcodeController::class, 'show'])->name('codes.scan');
-    Route::post('/people/{person}/codes', [QrBarcodeController::class, 'generate'])->name('codes.generate');
 
     Route::get('/applications', [ServiceApplicationController::class, 'index'])->name('applications.index');
     Route::post('/applications', [ServiceApplicationController::class, 'store'])->name('applications.store');

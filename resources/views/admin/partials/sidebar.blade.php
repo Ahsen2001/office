@@ -4,6 +4,8 @@
         ['label' => 'Users', 'icon' => 'fa-users-gear', 'route' => 'admin.users.index'],
         ['label' => 'Departments', 'icon' => 'fa-building', 'route' => 'admin.departments.index'],
         ['label' => 'Services', 'icon' => 'fa-briefcase', 'route' => 'admin.services.index'],
+        ['label' => 'People', 'icon' => 'fa-address-card', 'route' => 'staff.people.index'],
+        ['label' => 'QR Scanner', 'icon' => 'fa-camera', 'route' => 'staff.scanner.index'],
         ['label' => 'Applications', 'icon' => 'fa-folder-open', 'route' => 'staff.applications.index'],
         ['label' => 'Reports', 'icon' => 'fa-chart-line', 'route' => 'manager.dashboard'],
     ];
