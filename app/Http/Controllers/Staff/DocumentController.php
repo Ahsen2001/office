@@ -10,6 +10,7 @@ use App\Models\ServiceApplication;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Support\AuditLogger;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -39,14 +40,16 @@ class DocumentController extends Controller
 
     public function store(Request $request, ServiceApplication $application): RedirectResponse
     {
-        $this->saveDocument($request, $application->person, $application);
+        $document = $this->saveDocument($request, $application->person, $application);
+        AuditLogger::log('upload', 'documents', "Uploaded document {$document->file_name}.", $document, null, $document->only(['application_id', 'person_id', 'file_name', 'file_type']), $request);
 
         return back()->with('success', 'Document uploaded successfully.');
     }
 
     public function storeForPerson(Request $request, Person $person): RedirectResponse
     {
-        $this->saveDocument($request, $person);
+        $document = $this->saveDocument($request, $person);
+        AuditLogger::log('upload', 'documents', "Uploaded document {$document->file_name}.", $document, null, $document->only(['application_id', 'person_id', 'file_name', 'file_type']), $request);
 
         return back()->with('success', 'Document uploaded successfully.');
     }
@@ -83,7 +86,9 @@ class DocumentController extends Controller
             Storage::disk('public')->delete($document->file_path);
         }
 
+        $fileName = $document->file_name;
         $document->delete();
+        AuditLogger::log('delete', 'documents', "Deleted document {$fileName}.", $document, ['file_name' => $fileName], null, request());
 
         return back()->with('success', 'Document deleted successfully.');
     }

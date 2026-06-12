@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\User;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -43,7 +44,8 @@ class DepartmentController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Department::create($this->validated($request));
+        $department = Department::create($this->validated($request));
+        AuditLogger::log('create', 'departments', "Created department {$department->code}.", $department, null, $department->toArray(), $request);
 
         return redirect()->route('admin.departments.index')->with('success', 'Department created successfully.');
     }
@@ -58,14 +60,18 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department): RedirectResponse
     {
+        $oldValues = $department->getOriginal();
         $department->update($this->validated($request, $department));
+        AuditLogger::log('update', 'departments', "Updated department {$department->code}.", $department, $oldValues, $department->fresh()->toArray(), $request);
 
         return redirect()->route('admin.departments.index')->with('success', 'Department updated successfully.');
     }
 
     public function destroy(Department $department): RedirectResponse
     {
+        $code = $department->code;
         $department->delete();
+        AuditLogger::log('delete', 'departments', "Deleted department {$code}.", $department, ['code' => $code], null, request());
 
         return redirect()->route('admin.departments.index')->with('success', 'Department deleted successfully.');
     }
@@ -73,6 +79,7 @@ class DepartmentController extends Controller
     public function activate(Department $department): RedirectResponse
     {
         $department->update(['is_active' => true]);
+        AuditLogger::log('activate', 'departments', "Activated department {$department->code}.", $department, ['is_active' => false], ['is_active' => true], request());
 
         return back()->with('success', 'Department activated successfully.');
     }
@@ -80,6 +87,7 @@ class DepartmentController extends Controller
     public function deactivate(Department $department): RedirectResponse
     {
         $department->update(['is_active' => false]);
+        AuditLogger::log('deactivate', 'departments', "Deactivated department {$department->code}.", $department, ['is_active' => true], ['is_active' => false], request());
 
         return back()->with('success', 'Department deactivated successfully.');
     }

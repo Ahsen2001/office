@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\ServiceApplication;
 use App\Services\NotificationService;
+use App\Support\AuditLogger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -73,6 +74,7 @@ class PaymentController extends Controller
             'payment_added',
             $application
         );
+        AuditLogger::log('create', 'payments', "Added payment {$payment->receipt_no}.", $payment, null, $payment->only(['receipt_no', 'application_id', 'person_id', 'amount', 'status']), $request);
 
         return redirect()->route('staff.payments.show', $payment)->with('success', 'Payment saved successfully.');
     }

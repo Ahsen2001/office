@@ -11,6 +11,7 @@
         ['label' => 'Documents', 'icon' => 'fa-file-lines', 'route' => 'staff.documents.index'],
         ['label' => 'Payments', 'icon' => 'fa-money-bill-wave', 'route' => 'staff.payments.index'],
         ['label' => 'Notes', 'icon' => 'fa-note-sticky', 'route' => 'staff.notes.index'],
+        ['label' => 'Audit Logs', 'icon' => 'fa-shield-halved', 'route' => 'admin.audit-logs.index'],
         ['label' => 'Reports', 'icon' => 'fa-chart-line', 'route' => 'manager.reports.index'],
     ];
 @endphp

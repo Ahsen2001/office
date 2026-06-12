@@ -13,6 +13,7 @@ use App\Models\Service;
 use App\Models\ServiceApplication;
 use App\Models\User;
 use App\Services\NotificationService;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -94,6 +95,8 @@ class ServiceApplicationController extends Controller
             return $application;
         });
 
+        AuditLogger::log('create', 'applications', "Created application {$application->application_no}.", $application, null, $application->only(['application_no', 'person_id', 'service_id', 'department_id', 'status_id']), $request);
+
         return redirect()->route('staff.applications.show', $application)->with('success', 'Application created successfully.');
     }
 
@@ -133,7 +136,9 @@ class ServiceApplicationController extends Controller
         $data = $this->validated($request, $application);
         $oldStatusId = $application->status_id;
 
+        $oldValues = $application->only(array_keys($data));
         $application->update($data);
+        AuditLogger::log('update', 'applications', "Updated application {$application->application_no}.", $application, $oldValues, $application->only(array_keys($data)), $request);
 
         if ((int) $oldStatusId !== (int) $data['status_id']) {
             $status = ApplicationStatus::findOrFail($data['status_id']);
@@ -168,6 +173,7 @@ class ServiceApplicationController extends Controller
 
         $this->recordStatusHistory($application, $oldStatusId, $status->id, $request->user()->id, $data['remarks'] ?? null);
         $this->notifyStatusChange($application->fresh(['assignedOfficer', 'status', 'service']), $status);
+        AuditLogger::log('status_update', 'applications', "Changed {$application->application_no} status to {$status->name}.", $application, ['status_id' => $oldStatusId], ['status_id' => $status->id, 'remarks' => $data['remarks'] ?? null], $request);
 
         return back()->with('success', 'Application status updated successfully.');
     }

@@ -9,6 +9,7 @@ use App\Models\Person;
 use App\Models\ServiceApplication;
 use App\Models\User;
 use App\Services\NotificationService;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -98,6 +99,8 @@ class AppointmentController extends Controller
             );
         }
 
+        AuditLogger::log('create', 'appointments', "Created appointment {$appointment->appointment_no}.", $appointment, null, $appointment->only(['appointment_no', 'person_id', 'application_id', 'department_id', 'appointment_date', 'start_time']), $request);
+
         return redirect()->route('staff.appointments.show', $appointment)->with('success', 'Appointment booked successfully.');
     }
 
@@ -126,6 +129,8 @@ class AppointmentController extends Controller
             "{$appointment->appointment_no} was scheduled for {$appointment->appointment_date->format('Y-m-d')}.",
             'appointment_scheduled'
         );
+
+        AuditLogger::log('create', 'appointments', "Created appointment {$appointment->appointment_no}.", $appointment, null, $appointment->only(['appointment_no', 'person_id', 'application_id', 'department_id', 'appointment_date', 'start_time']), $request);
 
         return redirect()->route('staff.appointments.show', $appointment)->with('success', 'Appointment booked successfully.');
     }

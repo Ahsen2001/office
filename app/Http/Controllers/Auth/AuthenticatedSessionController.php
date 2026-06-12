@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +29,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        AuditLogger::log('login', 'auth', 'User logged in.', $request->user(), null, ['email' => $request->user()->email], $request);
+
         return redirect()->intended(route($request->user()->primaryDashboardRoute(), absolute: false));
     }
 
@@ -36,6 +39,11 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        if ($user) {
+            AuditLogger::log('logout', 'auth', 'User logged out.', $user, null, ['email' => $user->email], $request);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

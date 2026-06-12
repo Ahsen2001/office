@@ -6,7 +6,14 @@
         <div class="fw-semibold">@yield('page-title', 'Dashboard')</div>
         <div class="text-muted small">{{ now()->format('l, F j, Y') }}</div>
     </div>
-    <div class="ms-auto d-flex align-items-center gap-2">
+    <form method="GET" action="{{ route('search.index') }}" class="ms-auto me-2 position-relative d-none d-lg-block" style="width: min(420px, 34vw);">
+        <div class="input-group">
+            <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="search" name="q" value="{{ request('q') }}" class="form-control" placeholder="Search people, IDs, applications..." autocomplete="off" data-global-search>
+        </div>
+        <div class="list-group position-absolute shadow border-0 w-100 d-none" style="z-index: 1050;" data-search-suggestions></div>
+    </form>
+    <div class="d-flex align-items-center gap-2">
         @php
             $navNotifications = auth()->check()
                 ? \App\Models\OfficeNotification::where('user_id', auth()->id())->latest()->limit(5)->get()
@@ -46,3 +53,41 @@
         </form>
     </div>
 </nav>
+
+@push('scripts')
+<script>
+    (() => {
+        const input = document.querySelector('[data-global-search]');
+        const box = document.querySelector('[data-search-suggestions]');
+        if (!input || !box) return;
+
+        let timer;
+        input.addEventListener('input', () => {
+            clearTimeout(timer);
+            const query = input.value.trim();
+            if (query.length < 2) {
+                box.classList.add('d-none');
+                box.innerHTML = '';
+                return;
+            }
+
+            timer = setTimeout(async () => {
+                const response = await fetch(`{{ route('search.suggestions') }}?q=${encodeURIComponent(query)}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const suggestions = await response.json();
+                box.innerHTML = suggestions.length
+                    ? suggestions.map((item) => `<a class="list-group-item list-group-item-action" href="${item.url}"><div class="fw-semibold">${item.label}</div><div class="small text-muted">${item.type} &middot; ${item.meta ?? ''}</div></a>`).join('')
+                    : '<div class="list-group-item text-muted">No suggestions found</div>';
+                box.classList.remove('d-none');
+            }, 200);
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!box.contains(event.target) && event.target !== input) {
+                box.classList.add('d-none');
+            }
+        });
+    })();
+</script>
+@endpush

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DocumentType;
 use App\Models\Person;
 use App\Services\CodeGeneratorService;
+use App\Support\AuditLogger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,6 +66,8 @@ class PersonController extends Controller
             return $person;
         });
 
+        AuditLogger::log('create', 'people', "Created person {$person->person_code}.", $person, null, $person->only(['person_code', 'full_name', 'national_id', 'phone']), $request);
+
         return redirect()->route('staff.people.show', $person)->with('success', 'Person registered successfully.');
     }
 
@@ -90,7 +93,9 @@ class PersonController extends Controller
             $data['photo_path'] = $request->file('profile_photo')->store('people/photos', 'public');
         }
 
+        $oldValues = $person->only(array_keys($data));
         $person->update($data);
+        AuditLogger::log('update', 'people', "Updated person {$person->person_code}.", $person, $oldValues, $person->only(array_keys($data)), $request);
 
         return redirect()->route('staff.people.show', $person)->with('success', 'Person updated successfully.');
     }
@@ -99,7 +104,9 @@ class PersonController extends Controller
     {
         abort_unless(auth()->user()?->hasRole('admin'), 403);
 
+        $code = $person->person_code;
         $person->delete();
+        AuditLogger::log('delete', 'people', "Deleted person {$code}.", $person, ['person_code' => $code], null, request());
 
         return redirect()->route('staff.people.index')->with('success', 'Person deleted successfully.');
     }

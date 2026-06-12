@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
@@ -46,6 +47,8 @@ class UserController extends Controller
 
         $user->roles()->sync($validated['roles']);
 
+        AuditLogger::log('create', 'users', "Created user {$user->email}.", $user, null, $user->only(['name', 'email', 'department_id', 'is_active']), $request);
+
         return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }
 
@@ -75,8 +78,11 @@ class UserController extends Controller
             $user->password = Hash::make($validated['password']);
         }
 
+        $oldValues = $user->getOriginal();
         $user->save();
         $user->roles()->sync($validated['roles']);
+
+        AuditLogger::log('update', 'users', "Updated user {$user->email}.", $user, $oldValues, $user->fresh()->toArray(), $request);
 
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
@@ -85,7 +91,9 @@ class UserController extends Controller
     {
         abort_if($user->is(auth()->user()), 422, 'You cannot delete your own account.');
 
+        $email = $user->email;
         $user->delete();
+        AuditLogger::log('delete', 'users', "Deleted user {$email}.", $user, ['email' => $email], null, request());
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
@@ -93,6 +101,7 @@ class UserController extends Controller
     public function activate(User $user): RedirectResponse
     {
         $user->update(['is_active' => true]);
+        AuditLogger::log('activate', 'users', "Activated user {$user->email}.", $user, ['is_active' => false], ['is_active' => true], request());
 
         return back()->with('success', 'User activated successfully.');
     }
@@ -102,6 +111,7 @@ class UserController extends Controller
         abort_if($user->is(auth()->user()), 422, 'You cannot deactivate your own account.');
 
         $user->update(['is_active' => false]);
+        AuditLogger::log('deactivate', 'users', "Deactivated user {$user->email}.", $user, ['is_active' => true], ['is_active' => false], request());
 
         return back()->with('success', 'User deactivated successfully.');
     }

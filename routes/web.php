@@ -13,6 +13,8 @@ use App\Http\Controllers\Manager\ReportController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicApplicationStatusController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\AppointmentController;
 use App\Http\Controllers\Staff\DocumentController;
@@ -25,6 +27,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/status-check', [PublicApplicationStatusController::class, 'index'])->name('public.status');
 
 Route::get('/dashboard', DashboardRedirectController::class)->middleware(['auth', 'active'])->name('dashboard');
 
@@ -36,6 +39,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+
+    Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+    Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
 });
 
 Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -47,6 +53,8 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::patch('/departments/{department}/activate', [AdminDepartmentController::class, 'activate'])->name('departments.activate');
     Route::patch('/departments/{department}/deactivate', [AdminDepartmentController::class, 'deactivate'])->name('departments.deactivate');
     Route::resource('services', AdminServiceController::class)->except(['show']);
+    Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('/audit-logs/export', [\App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
     Route::delete('/people/{person}', [PersonController::class, 'destroy'])->name('people.destroy');
     Route::patch('/people/{person}/codes/regenerate', [QrBarcodeController::class, 'regenerate'])->name('people.codes.regenerate');
 });

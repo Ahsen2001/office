@@ -8,6 +8,7 @@ use App\Models\ApplicationStatus;
 use App\Models\ApplicationStatusHistory;
 use App\Models\ServiceApplication;
 use App\Services\NotificationService;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -91,6 +92,7 @@ class ApplicationProcessingController extends Controller
         ]);
 
         $this->notifyStatusChange($application->fresh(['assignedOfficer', 'status', 'service']), $status);
+        AuditLogger::log('status_update', 'applications', "Changed {$application->application_no} status to {$status->name}.", $application, ['status_id' => $oldStatusId], ['status_id' => $status->id, 'remarks' => $data['remarks'] ?? null], $request);
 
         return back()->with('success', 'Application updated successfully.');
     }

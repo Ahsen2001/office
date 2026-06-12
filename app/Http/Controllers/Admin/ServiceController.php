@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Service;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -49,7 +50,8 @@ class ServiceController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Service::create($this->validated($request));
+        $service = Service::create($this->validated($request));
+        AuditLogger::log('create', 'services', "Created service {$service->code}.", $service, null, $service->toArray(), $request);
 
         return redirect()->route('admin.services.index')->with('success', 'Service created successfully.');
     }
@@ -65,14 +67,18 @@ class ServiceController extends Controller
 
     public function update(Request $request, Service $service): RedirectResponse
     {
+        $oldValues = $service->getOriginal();
         $service->update($this->validated($request, $service));
+        AuditLogger::log('update', 'services', "Updated service {$service->code}.", $service, $oldValues, $service->fresh()->toArray(), $request);
 
         return redirect()->route('admin.services.index')->with('success', 'Service updated successfully.');
     }
 
     public function destroy(Service $service): RedirectResponse
     {
+        $code = $service->code;
         $service->delete();
+        AuditLogger::log('delete', 'services', "Deleted service {$code}.", $service, ['code' => $code], null, request());
 
         return redirect()->route('admin.services.index')->with('success', 'Service deleted successfully.');
     }
