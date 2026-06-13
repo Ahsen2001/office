@@ -10,7 +10,7 @@
                 <div class="card-body">
                     <h1 class="h4 mb-2">Scan QR code</h1>
                     <p class="text-muted">Use a webcam or mobile camera to scan a person card.</p>
-                    <div id="reader" class="border rounded overflow-hidden bg-light"></div>
+                    <div id="reader" class="scanner-frame rounded-4 overflow-hidden"></div>
                     <div id="scan-message" class="alert mt-3 d-none"></div>
                 </div>
             </div>

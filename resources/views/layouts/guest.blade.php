@@ -6,27 +6,128 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'Office Service'))</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <style>
-        body { min-height: 100vh; background: linear-gradient(135deg, #f7f9fc, #e9eef6); }
-        .auth-card { max-width: 460px; width: 100%; border: 0; box-shadow: 0 1rem 2rem rgba(15, 23, 42, .08); }
+        :root {
+            --office-blue: #1d4ed8;
+            --office-green: #059669;
+            --office-line: #dbe4ef;
+            --office-ink: #0f172a;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(29, 78, 216, .14), transparent 340px),
+                radial-gradient(circle at bottom right, rgba(5, 150, 105, .12), transparent 360px),
+                #f8fafc;
+            color: var(--office-ink);
+        }
+
+        .auth-shell {
+            min-height: 100vh;
+        }
+
+        .auth-panel {
+            max-width: 1080px;
+            width: 100%;
+            background: #fff;
+            border: 1px solid var(--office-line);
+            border-radius: 26px;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, .12);
+            overflow: hidden;
+        }
+
+        .auth-visual {
+            background: linear-gradient(135deg, #1d4ed8, #059669);
+            color: #fff;
+            min-height: 560px;
+        }
+
+        .auth-mark {
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, .16);
+            border: 1px solid rgba(255, 255, 255, .26);
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 460px;
+            border: 0;
+        }
+
+        .form-control {
+            border-radius: 12px;
+            border-color: var(--office-line);
+            padding: .72rem .9rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--office-blue);
+            box-shadow: 0 0 0 .2rem rgba(29, 78, 216, .12);
+        }
+
+        .btn {
+            border-radius: 12px;
+            font-weight: 700;
+            padding: .72rem 1rem;
+        }
+
+        .btn-primary {
+            background: var(--office-blue);
+            border-color: var(--office-blue);
+        }
+
+        @media (max-width: 991.98px) {
+            .auth-visual {
+                min-height: auto;
+            }
+        }
     </style>
 </head>
 <body>
-    <main class="min-vh-100 d-flex align-items-center justify-content-center p-3">
-        <div class="auth-card card">
-            <div class="card-body p-4 p-md-5">
-                <div class="mb-4 text-center">
-                    <a href="{{ url('/') }}" class="text-decoration-none">
-                        <div class="fw-bold fs-4 text-dark">{{ config('app.name', 'Office Service') }}</div>
-                        <div class="text-muted small">Secure office access</div>
-                    </a>
+    <main class="auth-shell d-flex align-items-center justify-content-center p-3 p-lg-4">
+        <div class="auth-panel row g-0">
+            <section class="auth-visual col-lg-6 d-flex flex-column justify-content-between p-4 p-lg-5">
+                <div>
+                    <div class="auth-mark mb-4"><i class="fa-solid fa-qrcode fs-3"></i></div>
+                    <h1 class="display-6 fw-bold mb-3">{{ config('app.name', 'Office Service') }}</h1>
+                    <p class="lead opacity-75 mb-0">Secure service intake, QR tracking, department processing, payments, appointments, and reports in one office workspace.</p>
                 </div>
-                @isset($slot)
-                    {{ $slot }}
-                @else
-                    @yield('content')
-                @endisset
-            </div>
+                <div class="row g-3 mt-5">
+                    <div class="col-6">
+                        <div class="p-3 rounded-4" style="background: rgba(255,255,255,.13);">
+                            <i class="fa-solid fa-shield-halved mb-2"></i>
+                            <div class="fw-semibold">Role protected</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded-4" style="background: rgba(255,255,255,.13);">
+                            <i class="fa-solid fa-chart-line mb-2"></i>
+                            <div class="fw-semibold">Live reporting</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="col-lg-6 d-flex align-items-center justify-content-center p-4 p-lg-5">
+                <div class="auth-card">
+                    <div class="mb-4">
+                        <div class="text-muted small fw-semibold text-uppercase">Secure access</div>
+                        <div class="fw-bold fs-4">Office portal</div>
+                    </div>
+                    @isset($slot)
+                        {{ $slot }}
+                    @else
+                        @yield('content')
+                    @endisset
+                </div>
+            </section>
         </div>
     </main>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

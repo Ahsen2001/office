@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\ApplicationDocument;
+use App\Policies\ApplicationDocumentPolicy;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(ApplicationDocument::class, ApplicationDocumentPolicy::class);
         Paginator::useBootstrapFive();
     }
 }

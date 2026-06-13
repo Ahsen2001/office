@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DepartmentController as AdminDepartmentController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
+use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\DepartmentOfficer\DashboardController as OfficerDashboardController;
@@ -53,6 +54,8 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::patch('/departments/{department}/activate', [AdminDepartmentController::class, 'activate'])->name('departments.activate');
     Route::patch('/departments/{department}/deactivate', [AdminDepartmentController::class, 'deactivate'])->name('departments.deactivate');
     Route::resource('services', AdminServiceController::class)->except(['show']);
+    Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
+    Route::put('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
     Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/audit-logs/export', [\App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
     Route::delete('/people/{person}', [PersonController::class, 'destroy'])->name('people.destroy');

@@ -45,7 +45,9 @@ class UserController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
-        $user->roles()->sync($validated['roles']);
+        // ensure we always pass an array to sync
+        $roles = $validated['roles'] ?? [];
+        $user->roles()->sync($roles);
 
         AuditLogger::log('create', 'users', "Created user {$user->email}.", $user, null, $user->only(['name', 'email', 'department_id', 'is_active']), $request);
 
@@ -66,6 +68,9 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
+        // capture original values before applying changes
+        $oldValues = $user->getOriginal();
+
         $user->fill([
             'department_id' => $validated['department_id'] ?? null,
             'name' => $validated['name'],
@@ -78,9 +83,11 @@ class UserController extends Controller
             $user->password = Hash::make($validated['password']);
         }
 
-        $oldValues = $user->getOriginal();
         $user->save();
-        $user->roles()->sync($validated['roles']);
+
+        // ensure we always pass an array to sync
+        $roles = $validated['roles'] ?? [];
+        $user->roles()->sync($roles);
 
         AuditLogger::log('update', 'users', "Updated user {$user->email}.", $user, $oldValues, $user->fresh()->toArray(), $request);
 
@@ -89,7 +96,8 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        abort_if($user->is(auth()->user()), 422, 'You cannot delete your own account.');
+        // use id comparison to avoid calling methods on null auth user
+        abort_if($user->id === auth()->id(), 422, 'You cannot delete your own account.');
 
         $email = $user->email;
         $user->delete();
