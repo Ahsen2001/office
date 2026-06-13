@@ -11,9 +11,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use App\Support\AuditLogger;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Support\AuditLogger;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
@@ -134,19 +133,21 @@ class DocumentController extends Controller
         }
 
         $extension = strtolower($file->getClientOriginalExtension());
-        $directory = $application
-            ? 'documents/applications/'.$application->application_no
-            : 'documents/people/'.$person->person_code;
+        $directory = $application !== null
+            ? "documents/applications/{$application->application_no}"
+            : "documents/people/{$person->person_code}";
 
         $path = $file->store($directory, 'local');
-        $documentType = DocumentType::find($data['document_type_id']);
+        $documentType = DocumentType::query()
+            ->whereKey($data['document_type_id'])
+            ->first();
 
         return ApplicationDocument::create([
-            'application_id' => $application ? $application->id : null,
+            'application_id' => $application?->id,
             'person_id' => $person->id,
             'document_type_id' => $data['document_type_id'],
-            'document_title' => $data['document_title'] ?: ($documentType ? $documentType->name : null),
-            'uploaded_by' => $request->user() ? $request->user()->id : null,
+            'document_title' => $data['document_title'] ?: $documentType?->name,
+            'uploaded_by' => $request->user()?->id,
             'file_name' => $file->getClientOriginalName(),
             'file_path' => $path,
             'file_type' => $extension,

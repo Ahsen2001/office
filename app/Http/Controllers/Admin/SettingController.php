@@ -27,7 +27,11 @@ class SettingController extends Controller
         }
 
         return view('admin.settings.index', [
-            'settings' => SystemSetting::orderBy('group')->orderBy('key')->get()->groupBy('group'),
+            'settings' => SystemSetting::query()
+                ->orderBy('group', 'asc')
+                ->orderBy('key', 'asc')
+                ->get()
+                ->groupBy('group'),
         ]);
     }
 
@@ -39,7 +43,9 @@ class SettingController extends Controller
         ]);
 
         foreach ($data['settings'] as $key => $value) {
-            $setting = SystemSetting::where('key', $key)->first();
+            $setting = SystemSetting::query()
+                ->where('key', '=', $key)
+                ->first();
 
             if (! $setting) {
                 continue;

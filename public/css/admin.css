@@ -112,6 +112,7 @@ a {
 .admin-topbar {
     min-height: 74px;
     background: rgba(255, 255, 255, .92);
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--office-line);
     position: sticky;

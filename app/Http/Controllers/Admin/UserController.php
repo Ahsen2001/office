@@ -26,8 +26,14 @@ class UserController extends Controller
     {
         return view('admin.users.create', [
             'user' => new User(['is_active' => true]),
-            'roles' => Role::where('is_active', true)->orderBy('name')->get(),
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
+            'roles' => Role::query()
+                ->where('is_active', '=', true)
+                ->orderBy('name', 'asc')
+                ->get(),
+            'departments' => Department::query()
+                ->where('is_active', '=', true)
+                ->orderBy('name', 'asc')
+                ->get(),
             'selectedRoles' => [],
         ]);
     }
@@ -58,8 +64,14 @@ class UserController extends Controller
     {
         return view('admin.users.edit', [
             'user' => $user->load('roles'),
-            'roles' => Role::where('is_active', true)->orderBy('name')->get(),
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
+            'roles' => Role::query()
+                ->where('is_active', '=', true)
+                ->orderBy('name', 'asc')
+                ->get(),
+            'departments' => Department::query()
+                ->where('is_active', '=', true)
+                ->orderBy('name', 'asc')
+                ->get(),
             'selectedRoles' => $user->roles->pluck('id')->all(),
         ]);
     }
@@ -96,11 +108,15 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        // use id comparison to avoid calling methods on null auth user
-        abort_if($user->id === auth()->id(), 422, 'You cannot delete your own account.');
+        $currentUser = request()->user();
+
+        abort_unless($currentUser, 403);
+        abort_if((int) $user->getKey() === (int) $currentUser->getKey(), 422, 'You cannot delete your own account.');
 
         $email = $user->email;
-        $user->delete();
+        User::query()
+            ->whereKey($user->getKey())
+            ->delete();
         AuditLogger::log('delete', 'users', "Deleted user {$email}.", $user, ['email' => $email], null, request());
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
@@ -116,7 +132,10 @@ class UserController extends Controller
 
     public function deactivate(User $user): RedirectResponse
     {
-        abort_if($user->id === auth()->id(), 422, 'You cannot deactivate your own account.');
+        $currentUser = request()->user();
+
+        abort_unless($currentUser, 403);
+        abort_if((int) $user->getKey() === (int) $currentUser->getKey(), 422, 'You cannot deactivate your own account.');
 
         $user->update(['is_active' => false]);
         AuditLogger::log('deactivate', 'users', "Deactivated user {$user->email}.", $user, ['is_active' => true], ['is_active' => false], request());
