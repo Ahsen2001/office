@@ -22,6 +22,7 @@ class PersonController extends Controller
         $search = $request->string('search')->toString();
 
         $people = Person::query()
+            ->when($request->user()->isBranchRestricted(), fn ($query) => $query->whereHas('applications', fn ($applications) => $applications->where('branch_id', $request->user()->branch_id)))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('full_name', 'like', "%{$search}%")
@@ -40,6 +41,7 @@ class PersonController extends Controller
 
     public function create(): View
     {
+        abort_unless(auth()->user()?->hasRole('admin', 'reception'), 403);
         return view('staff.people.create', [
             'person' => new Person(['country' => 'Sri Lanka', 'gender' => 'not_specified']),
         ]);
@@ -47,6 +49,7 @@ class PersonController extends Controller
 
     public function store(Request $request, CodeGeneratorService $codes): RedirectResponse
     {
+        abort_unless($request->user()->hasRole('admin', 'reception'), 403);
         $data = $this->validated($request);
 
         $person = DB::transaction(function () use ($request, $data, $codes) {
@@ -73,16 +76,19 @@ class PersonController extends Controller
 
     public function show(Person $person): View
     {
+        $this->authorizePerson($person);
         return view('staff.people.show', $this->profileData($person));
     }
 
     public function edit(Person $person): View
     {
+        abort_unless(auth()->user()?->hasRole('admin', 'reception'), 403);
         return view('staff.people.edit', compact('person'));
     }
 
     public function update(Request $request, Person $person): RedirectResponse
     {
+        abort_unless($request->user()->hasRole('admin', 'reception'), 403);
         $data = $this->validated($request, $person);
 
         if ($request->hasFile('profile_photo')) {
@@ -113,11 +119,13 @@ class PersonController extends Controller
 
     public function card(Person $person): View
     {
+        $this->authorizePerson($person);
         return view('staff.people.card', compact('person'));
     }
 
     public function report(Person $person)
     {
+        $this->authorizePerson($person);
         $data = $this->profileData($person);
 
         return Pdf::loadView('staff.people.report', $data)
@@ -171,7 +179,6 @@ class PersonController extends Controller
         $person->load([
             'registrar',
             'documents.documentType',
-            'payments.method',
             'appointments.officer',
             'applicationNotes.creator',
             'applications.service',
@@ -191,9 +198,19 @@ class PersonController extends Controller
             'pendingApplications' => $person->applications->filter(fn ($application) => in_array($application->status?->code, ['submitted', 'pending', 'under_review', 'processing', 'waiting_for_documents'], true))->count(),
             'completedApplications' => $statusCounts['completed'] ?? 0,
             'rejectedApplications' => $statusCounts['rejected'] ?? 0,
-            'paidTotal' => $person->payments->where('status', 'paid')->sum('amount'),
-            'pendingPaymentTotal' => $person->payments->whereIn('status', ['unpaid', 'partially_paid'])->sum('amount'),
             'documentTypes' => DocumentType::where('is_active', true)->orderBy('name')->get(),
         ];
+    }
+
+    private function authorizePerson(Person $person): void
+    {
+        $user = auth()->user();
+        abort_unless($user, 403);
+
+        if (! $user->isBranchRestricted()) {
+            return;
+        }
+
+        abort_unless($person->applications()->where('branch_id', $user->branch_id)->exists(), 403);
     }
 }

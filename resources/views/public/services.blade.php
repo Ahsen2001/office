@@ -7,7 +7,7 @@
         <div class="container">
             <span class="public-eyebrow"><i class="fa-solid fa-briefcase"></i> Service directory</span>
             <h1 class="mt-2 mb-3">Find the office service you need</h1>
-            <p>Review service descriptions, departments, document requirements, processing time, and applicable fees before visiting the office.</p>
+            <p>Review service descriptions, branches, document requirements, processing time, and applicable fees before visiting the office.</p>
         </div>
     </header>
 
@@ -19,13 +19,13 @@
                         <label for="service-search" class="form-label fw-semibold">Search services</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                            <input id="service-search" type="search" name="search" value="{{ $search }}" class="form-control" placeholder="Service name, code, department, or keyword">
+                            <input id="service-search" type="search" name="search" value="{{ $search }}" class="form-control" placeholder="Service name, code, branch, or keyword">
                         </div>
                     </div>
                     <div class="col-lg-3">
-                        <label for="department-filter" class="form-label fw-semibold">Department</label>
-                        <select id="department-filter" name="department_id" class="form-select">
-                            <option value="">All departments</option>
+                        <label for="department-filter" class="form-label fw-semibold">Branch</label>
+                        <select id="department-filter" name="branch_id" class="form-select">
+                            <option value="">All branches</option>
                             @foreach($departments as $department)
                                 <option value="{{ $department->id }}" @selected($departmentId === $department->id)>{{ $department->name }}</option>
                             @endforeach
@@ -66,14 +66,14 @@
                                                 @endforeach
                                             </ul>
                                         @else
-                                            <div class="small text-muted">Confirm with the department before applying.</div>
+                                            <div class="small text-muted">Confirm with the branch before applying.</div>
                                         @endif
                                     </div>
                                     <div class="service-meta">
-                                        <div><div class="service-meta-label">Department</div><div class="small fw-semibold">{{ $service->department?->name }}</div></div>
+                                        <div><div class="service-meta-label">Branch</div><div class="small fw-semibold">{{ $service->branch?->name }}</div></div>
                                         <div><div class="service-meta-label">Processing time</div><div class="small fw-semibold">{{ $processingDays ? $processingDays.' days' : 'Contact office' }}</div></div>
-                                        <div><div class="service-meta-label">Service fee</div><div class="small fw-semibold">{{ (float) $service->fee_amount > 0 ? 'LKR '.number_format((float) $service->fee_amount, 2) : 'No fee listed' }}</div></div>
                                         <div><div class="service-meta-label">Appointment</div><div class="small fw-semibold">{{ $service->requires_appointment ? 'Required' : 'Not required' }}</div></div>
+                                        <div><div class="service-meta-label">Service fee</div><div class="small fw-semibold">LKR {{ number_format((float) $service->fee_amount, 2) }}</div></div>
                                     </div>
                                 </div>
                             </div>
@@ -84,7 +84,7 @@
                         <div class="public-card p-5 text-center">
                             <span class="public-icon mb-3"><i class="fa-solid fa-magnifying-glass"></i></span>
                             <h3 class="h5">No services matched your filters</h3>
-                            <p class="text-muted">Try a different keyword or clear the department filter.</p>
+                            <p class="text-muted">Try a different keyword or clear the branch filter.</p>
                             <a href="{{ route('public.services') }}" class="btn btn-public-primary public-btn">Clear Filters</a>
                         </div>
                     </div>

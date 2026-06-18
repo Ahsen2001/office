@@ -45,7 +45,6 @@
         <a href="{{ route('staff.applications.create', ['person_id' => $person->id]) }}" class="btn btn-primary"><i class="fa-solid fa-file-circle-plus me-1"></i>Create New Application</a>
         <a href="#documents" class="btn btn-outline-secondary"><i class="fa-solid fa-upload me-1"></i>Upload Document</a>
         <a href="#notes" class="btn btn-outline-secondary"><i class="fa-solid fa-note-sticky me-1"></i>Add Note</a>
-        <a href="#payments" class="btn btn-outline-secondary"><i class="fa-solid fa-money-bill-wave me-1"></i>Add Payment</a>
         <a href="{{ route('staff.appointments.create', ['person_id' => $person->id]) }}" class="btn btn-outline-secondary"><i class="fa-solid fa-calendar-plus me-1"></i>Book Appointment</a>
         <button onclick="window.print()" class="btn btn-outline-success"><i class="fa-solid fa-print me-1"></i>Print Profile</button>
         <a href="{{ route('staff.people.report', $person) }}" class="btn btn-outline-dark"><i class="fa-solid fa-file-arrow-down me-1"></i>Download Report</a>
@@ -81,19 +80,6 @@
                 </div>
             </div>
 
-            <div class="card soft-card" id="payments">
-                <div class="card-body">
-                    <h2 class="h5 mb-3">Payment Summary</h2>
-                    <div class="d-flex justify-content-between"><span>Paid</span><strong>{{ number_format($paidTotal, 2) }}</strong></div>
-                    <div class="d-flex justify-content-between"><span>Pending</span><strong>{{ number_format($pendingPaymentTotal, 2) }}</strong></div>
-                    <hr>
-                    @forelse($person->payments as $payment)
-                        <div class="small mb-2">{{ $payment->receipt_no }} - {{ number_format($payment->amount, 2) }} <span class="badge text-bg-secondary">{{ $payment->status }}</span></div>
-                    @empty
-                        <div class="text-muted">No payments recorded.</div>
-                    @endforelse
-                </div>
-            </div>
         </div>
 
         <div class="col-xl-8">
@@ -102,13 +88,13 @@
                     <h2 class="h5 mb-3">Applications</h2>
                     <div class="table-responsive">
                         <table class="table align-middle">
-                            <thead><tr><th>No</th><th>Service</th><th>Department</th><th>Status</th><th></th></tr></thead>
+                            <thead><tr><th>No</th><th>Service</th><th>Branch</th><th>Status</th><th></th></tr></thead>
                             <tbody>
                                 @forelse($person->applications as $application)
                                     <tr>
                                         <td>{{ $application->application_no }}</td>
                                         <td>{{ $application->service?->name }}</td>
-                                        <td>{{ $application->department?->name }}</td>
+                                        <td>{{ $application->branch?->name }}</td>
                                         <td><span class="badge text-bg-secondary">{{ $application->status?->name }}</span></td>
                                         <td><a href="{{ route('staff.applications.show', $application) }}" class="btn btn-sm btn-outline-primary">View</a></td>
                                     </tr>

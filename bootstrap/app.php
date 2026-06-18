@@ -22,6 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'staff' => \App\Http\Middleware\StaffMiddleware::class,
             'department.officer' => \App\Http\Middleware\DepartmentOfficerMiddleware::class,
             'manager' => \App\Http\Middleware\ManagerMiddleware::class,
+            'branch.access' => \App\Http\Middleware\BranchAccessMiddleware::class,
+            'management' => \App\Http\Middleware\ManagementMiddleware::class,
+            'reception' => \App\Http\Middleware\ReceptionMiddleware::class,
+            'branch.head' => \App\Http\Middleware\BranchHeadMiddleware::class,
+            'branch.staff' => \App\Http\Middleware\BranchStaffMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

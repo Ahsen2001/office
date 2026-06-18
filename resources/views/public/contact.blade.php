@@ -26,14 +26,15 @@
                 @endforeach
             </div>
 
-            <div class="row g-4">
+            <div class="section-heading mb-4">
+                <span class="public-eyebrow text-primary"><i class="fa-solid fa-paper-plane"></i> Send a message</span>
+                <h2>Tell us how we can assist</h2>
+                <p>Messages are saved securely for authorized administrators to review.</p>
+            </div>
+
+            <div class="row g-4 align-items-stretch contact-layout">
                 <div class="col-lg-7">
-                    <div class="section-heading">
-                        <span class="public-eyebrow text-primary"><i class="fa-solid fa-paper-plane"></i> Send a message</span>
-                        <h2>Tell us how we can assist</h2>
-                        <p>Messages are saved securely for authorized administrators to review.</p>
-                    </div>
-                    <form method="POST" action="{{ route('public.contact.store') }}" class="public-card p-4">
+                    <form method="POST" action="{{ route('public.contact.store') }}" class="public-card contact-form-card p-4">
                         @csrf
                         <div class="honeypot-field" aria-hidden="true">
                             <label for="website">Website</label>
@@ -72,7 +73,7 @@
                     </form>
                 </div>
                 <div class="col-lg-5">
-                    <div class="public-map h-100">
+                    <div class="public-map contact-map h-100">
                         <div>
                             <span class="public-icon green mb-3"><i class="fa-solid fa-map-location-dot"></i></span>
                             <h2 class="h5">Google Map</h2>

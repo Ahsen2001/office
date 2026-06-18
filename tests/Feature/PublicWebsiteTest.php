@@ -58,7 +58,6 @@ class PublicWebsiteTest extends TestCase
             'code' => 'PUBLIC-CERT',
             'name' => 'Certificate Request',
             'description' => 'Certificate service.',
-            'fee_amount' => 0,
             'is_active' => true,
         ]);
 

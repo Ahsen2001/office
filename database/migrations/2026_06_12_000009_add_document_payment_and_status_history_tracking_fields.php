@@ -40,56 +40,10 @@ return new class extends Migration
             });
         }
 
-        Schema::table('payments', function (Blueprint $table) {
-            if (! Schema::hasColumn('payments', 'service_id')) {
-                $table->foreignId('service_id')->nullable()->after('person_id')->constrained('services')->nullOnDelete();
-            }
-
-            if (! Schema::hasColumn('payments', 'payment_date')) {
-                $table->timestamp('payment_date')->nullable()->after('status');
-            }
-        });
-
-        if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE payments MODIFY status ENUM('unpaid', 'paid', 'partially_paid', 'refunded') NOT NULL DEFAULT 'unpaid'");
-        }
-
-        DB::table('payments')
-            ->orderBy('id')
-            ->get(['id', 'application_id', 'paid_at', 'created_at'])
-            ->each(function ($payment) {
-                $serviceId = DB::table('service_applications')->where('id', $payment->application_id)->value('service_id');
-
-                DB::table('payments')->where('id', $payment->id)->update([
-                    'service_id' => $serviceId,
-                    'payment_date' => $payment->paid_at ?: $payment->created_at ?: now(),
-                ]);
-            });
-
-        DB::table('payment_methods')->upsert([
-            ['code' => 'CASH', 'name' => 'Cash', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
-            ['code' => 'BANK_TRANSFER', 'name' => 'Bank Transfer', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
-            ['code' => 'CARD', 'name' => 'Card', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
-            ['code' => 'ONLINE_PAYMENT', 'name' => 'Online Payment', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
-        ], ['code'], ['name', 'is_active', 'updated_at']);
     }
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE payments MODIFY status ENUM('pending', 'paid', 'failed', 'refunded', 'cancelled') NOT NULL DEFAULT 'pending'");
-        }
-
-        Schema::table('payments', function (Blueprint $table) {
-            if (Schema::hasColumn('payments', 'service_id')) {
-                $table->dropConstrainedForeignId('service_id');
-            }
-
-            if (Schema::hasColumn('payments', 'payment_date')) {
-                $table->dropColumn('payment_date');
-            }
-        });
-
         if (DB::getDriverName() !== 'sqlite') {
             Schema::table('application_documents', function (Blueprint $table) {
                 $table->dropForeign(['application_id']);

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
-use App\Models\Department;
+use App\Models\Branch;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\AuditLogger;
@@ -18,7 +18,7 @@ class UserController extends Controller
     public function index(): View
     {
         return view('admin.users.index', [
-            'users' => User::with(['department', 'roles'])->latest()->paginate(15),
+            'users' => User::with(['branch', 'roles'])->latest()->paginate(15),
         ]);
     }
 
@@ -30,11 +30,11 @@ class UserController extends Controller
                 ->where('is_active', '=', true)
                 ->orderBy('name', 'asc')
                 ->get(),
-            'departments' => Department::query()
+            'branches' => Branch::query()
                 ->where('is_active', '=', true)
                 ->orderBy('name', 'asc')
                 ->get(),
-            'selectedRoles' => [],
+            'selectedRole' => null,
         ]);
     }
 
@@ -43,7 +43,7 @@ class UserController extends Controller
         $validated = $request->validated();
 
         $user = User::create([
-            'department_id' => $validated['department_id'] ?? null,
+            'branch_id' => $validated['branch_id'] ?? null,
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
@@ -52,10 +52,10 @@ class UserController extends Controller
         ]);
 
         // ensure we always pass an array to sync
-        $roles = $validated['roles'] ?? [];
-        $user->roles()->sync($roles);
+        $roleId = Role::where('slug', $validated['role_slug'])->value('id');
+        $user->roles()->sync([$roleId]);
 
-        AuditLogger::log('create', 'users', "Created user {$user->email}.", $user, null, $user->only(['name', 'email', 'department_id', 'is_active']), $request);
+        AuditLogger::log('create', 'users', "Created user {$user->email}.", $user, null, $user->only(['name', 'email', 'branch_id', 'is_active']), $request);
 
         return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }
@@ -68,11 +68,11 @@ class UserController extends Controller
                 ->where('is_active', '=', true)
                 ->orderBy('name', 'asc')
                 ->get(),
-            'departments' => Department::query()
+            'branches' => Branch::query()
                 ->where('is_active', '=', true)
                 ->orderBy('name', 'asc')
                 ->get(),
-            'selectedRoles' => $user->roles->pluck('id')->all(),
+            'selectedRole' => $user->roles->first()?->slug,
         ]);
     }
 
@@ -84,7 +84,7 @@ class UserController extends Controller
         $oldValues = $user->getOriginal();
 
         $user->fill([
-            'department_id' => $validated['department_id'] ?? null,
+            'branch_id' => $validated['branch_id'] ?? null,
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
@@ -98,8 +98,8 @@ class UserController extends Controller
         $user->save();
 
         // ensure we always pass an array to sync
-        $roles = $validated['roles'] ?? [];
-        $user->roles()->sync($roles);
+        $roleId = Role::where('slug', $validated['role_slug'])->value('id');
+        $user->roles()->sync([$roleId]);
 
         AuditLogger::log('update', 'users', "Updated user {$user->email}.", $user, $oldValues, $user->fresh()->toArray(), $request);
 

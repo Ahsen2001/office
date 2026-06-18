@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationStatusHistory;
-use App\Models\Department;
+use App\Models\Branch;
 use App\Models\DocumentType;
-use App\Models\PaymentMethod;
 use App\Models\Person;
 use App\Models\Service;
 use App\Models\ServiceApplication;
@@ -25,11 +24,12 @@ class ServiceApplicationController extends Controller
     {
         $search = $request->string('search')->toString();
         $statusId = $request->integer('status_id') ?: null;
-        $departmentId = $request->integer('department_id') ?: null;
+        $departmentId = $request->integer('branch_id') ?: null;
 
-        $applications = ServiceApplication::with(['person', 'service', 'department', 'assignedOfficer', 'status'])
+        $applications = ServiceApplication::with(['person', 'service', 'branch', 'assignedOfficer', 'status'])
+            ->visibleTo($request->user())
             ->when($statusId, fn ($query) => $query->where('status_id', $statusId))
-            ->when($departmentId, fn ($query) => $query->where('department_id', $departmentId))
+            ->when($departmentId, fn ($query) => $query->where('branch_id', $departmentId))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('application_no', 'like', "%{$search}%")
@@ -47,7 +47,7 @@ class ServiceApplicationController extends Controller
         return view('staff.applications.index', [
             'applications' => $applications,
             'statuses' => ApplicationStatus::orderBy('sort_order')->get(),
-            'departments' => Department::orderBy('name')->get(),
+            'departments' => Branch::visibleTo($request->user())->orderBy('name')->get(),
             'search' => $search,
             'statusId' => $statusId,
             'departmentId' => $departmentId,
@@ -56,6 +56,7 @@ class ServiceApplicationController extends Controller
 
     public function create(Request $request): View
     {
+        abort_unless($request->user()->hasRole('admin', 'reception'), 403);
         $person = $request->integer('person_id') ? Person::find($request->integer('person_id')) : null;
 
         return view('staff.applications.create', $this->formData(new ServiceApplication(), $person));
@@ -63,6 +64,7 @@ class ServiceApplicationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()->hasRole('admin', 'reception'), 403);
         $data = $this->validated($request);
 
         $application = DB::transaction(function () use ($request, $data) {
@@ -71,9 +73,9 @@ class ServiceApplicationController extends Controller
 
             $data['application_no'] = $this->generateApplicationNumber();
             $data['department_id'] = $data['department_id'] ?: $service->department_id;
+            $data['branch_id'] = $service->branch_id;
             $data['submitted_by'] = $request->user()->id;
             $data['submitted_at'] = $data['submitted_at'] ?? now();
-            $data['total_fee'] = $service->fee_amount;
             $data['required_documents'] = $service->required_documents ?? [];
 
             $application = ServiceApplication::create($data);
@@ -107,11 +109,10 @@ class ServiceApplicationController extends Controller
                 'person',
                 'service',
                 'department',
+                'branch',
                 'assignedOfficer',
                 'status',
                 'documents.documentType',
-                'payments.method',
-                'payments.receiver',
                 'appointments.officer',
                 'notes.creator',
                 'statusHistories.fromStatus',
@@ -121,18 +122,24 @@ class ServiceApplicationController extends Controller
             ]),
             'statuses' => ApplicationStatus::orderBy('sort_order')->get(),
             'documentTypes' => DocumentType::where('is_active', true)->orderBy('name')->get(),
-            'paymentMethods' => PaymentMethod::where('is_active', true)->orderBy('name')->get(),
+            'branchStaff' => User::where('branch_id', $application->branch_id)
+                ->where('is_active', true)
+                ->whereHas('roles', fn ($query) => $query->where('slug', 'branch_staff'))
+                ->orderBy('name')
+                ->get(),
             'missingRequiredDocuments' => $this->missingRequiredDocuments($application),
         ]);
     }
 
     public function edit(ServiceApplication $application): View
     {
+        abort_unless(auth()->user()?->hasRole('admin', 'reception'), 403);
         return view('staff.applications.edit', $this->formData($application, $application->person));
     }
 
     public function update(Request $request, ServiceApplication $application): RedirectResponse
     {
+        abort_unless($request->user()->hasRole('admin', 'reception'), 403);
         $data = $this->validated($request, $application);
         $oldStatusId = $application->status_id;
 
@@ -178,10 +185,29 @@ class ServiceApplicationController extends Controller
         return back()->with('success', 'Application status updated successfully.');
     }
 
+    public function assign(Request $request, ServiceApplication $application): RedirectResponse
+    {
+        abort_unless($request->user()->hasRole('admin', 'branch_head'), 403);
+        abort_if($request->user()->hasRole('branch_head') && (int) $application->branch_id !== (int) $request->user()->branch_id, 403);
+
+        $data = $request->validate([
+            'assigned_officer_id' => ['required', 'exists:users,id'],
+        ]);
+
+        $officer = User::whereKey($data['assigned_officer_id'])
+            ->where('branch_id', $application->branch_id)
+            ->whereHas('roles', fn ($query) => $query->where('slug', 'branch_staff'))
+            ->firstOrFail();
+
+        $application->update(['assigned_officer_id' => $officer->id]);
+
+        return back()->with('success', 'Application assigned successfully.');
+    }
+
     public function receipt(ServiceApplication $application): View
     {
         return view('staff.applications.receipt', [
-            'application' => $application->load(['person', 'service', 'department', 'assignedOfficer', 'status', 'payments.method']),
+            'application' => $application->load(['person', 'service', 'department', 'assignedOfficer', 'status']),
         ]);
     }
 
@@ -190,7 +216,7 @@ class ServiceApplicationController extends Controller
         return $request->validate([
             'person_id' => ['required', 'exists:people,id'],
             'service_id' => ['required', 'exists:services,id'],
-            'department_id' => ['nullable', 'exists:departments,id'],
+            'department_id' => ['nullable', 'exists:branches,id'],
             'assigned_officer_id' => ['nullable', 'exists:users,id'],
             'submitted_at' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:submitted_at'],
@@ -207,9 +233,9 @@ class ServiceApplicationController extends Controller
             'application' => $application,
             'person' => $person,
             'people' => Person::orderBy('full_name')->limit(200)->get(),
-            'services' => Service::where('is_active', true)->with('department')->orderBy('name')->get(),
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
-            'officers' => User::where('is_active', true)->whereHas('roles', fn ($query) => $query->where('slug', 'department_officer'))->orderBy('name')->get(),
+            'services' => Service::where('is_active', true)->with('branch')->orderBy('name')->get(),
+            'departments' => Branch::where('is_active', true)->orderBy('name')->get(),
+            'officers' => User::where('is_active', true)->whereHas('roles', fn ($query) => $query->whereIn('slug', ['branch_head', 'branch_staff']))->orderBy('name')->get(),
             'statuses' => ApplicationStatus::orderBy('sort_order')->get(),
         ];
     }
@@ -232,6 +258,7 @@ class ServiceApplicationController extends Controller
         ApplicationStatusHistory::create([
             'application_id' => $application->id,
             'department_id' => $application->department_id,
+            'branch_id' => $application->branch_id,
             'from_status_id' => $fromStatusId,
             'to_status_id' => $toStatusId,
             'changed_by' => $userId,

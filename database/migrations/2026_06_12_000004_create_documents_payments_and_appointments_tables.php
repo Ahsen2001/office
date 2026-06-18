@@ -39,32 +39,6 @@ return new class extends Migration
             $table->index(['person_id', 'document_type_id']);
         });
 
-        Schema::create('payment_methods', function (Blueprint $table) {
-            $table->id();
-            $table->string('code', 50)->unique();
-            $table->string('name', 100);
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
-
-        Schema::create('payments', function (Blueprint $table) {
-            $table->id();
-            $table->string('receipt_no', 50)->unique();
-            $table->foreignId('application_id')->constrained('service_applications')->restrictOnDelete();
-            $table->foreignId('person_id')->constrained('people')->restrictOnDelete();
-            $table->foreignId('payment_method_id')->constrained('payment_methods')->restrictOnDelete();
-            $table->foreignId('received_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->decimal('amount', 12, 2);
-            $table->enum('status', ['pending', 'paid', 'failed', 'refunded', 'cancelled'])->default('pending');
-            $table->string('transaction_reference', 120)->nullable();
-            $table->text('remarks')->nullable();
-            $table->timestamp('paid_at')->nullable();
-            $table->timestamps();
-
-            $table->index(['application_id', 'status']);
-            $table->index(['person_id', 'paid_at']);
-        });
-
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
             $table->string('appointment_no', 50)->unique();
@@ -91,8 +65,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('appointments');
-        Schema::dropIfExists('payments');
-        Schema::dropIfExists('payment_methods');
         Schema::dropIfExists('application_documents');
         Schema::dropIfExists('document_types');
     }

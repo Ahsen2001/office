@@ -14,6 +14,7 @@ class Appointment extends Model
         'application_id',
         'person_id',
         'department_id',
+        'branch_id',
         'officer_id',
         'created_by',
         'appointment_date',
@@ -51,6 +52,11 @@ class Appointment extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function creator()

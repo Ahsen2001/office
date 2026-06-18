@@ -15,7 +15,7 @@ return new class extends Migration
 
         Schema::table('services', function (Blueprint $table) {
             $table->json('required_documents')->nullable()->after('description');
-            $table->unsignedSmallInteger('processing_time_days')->nullable()->after('fee_amount');
+            $table->unsignedSmallInteger('processing_time_days')->nullable()->after('description');
         });
     }
 

@@ -16,15 +16,17 @@ class OfficeServiceSeeder extends Seeder
         DB::transaction(function () use ($now) {
             DB::table('roles')->insert([
                 ['name' => 'Admin', 'slug' => 'admin', 'description' => 'Full system access.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
-                ['name' => 'Staff', 'slug' => 'staff', 'description' => 'Registers people, applications, payments, and appointments.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
-                ['name' => 'Department Officer', 'slug' => 'department_officer', 'description' => 'Processes department applications.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
-                ['name' => 'Manager', 'slug' => 'manager', 'description' => 'Monitors workload, approvals, and reports.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+                ['name' => 'Reception Staff', 'slug' => 'reception', 'description' => 'Registers people and creates applications.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+                ['name' => 'Branch Head', 'slug' => 'branch_head', 'description' => 'Manages an assigned branch.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+                ['name' => 'Branch Staff', 'slug' => 'branch_staff', 'description' => 'Processes assigned branch applications.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+                ['name' => 'Divisional Secretary / ADS / AO', 'slug' => 'management', 'description' => 'Monitors all branches and reports.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
             ]);
 
             $adminRoleId = DB::table('roles')->where('slug', 'admin')->value('id');
-            $staffRoleId = DB::table('roles')->where('slug', 'staff')->value('id');
-            $officerRoleId = DB::table('roles')->where('slug', 'department_officer')->value('id');
-            $managerRoleId = DB::table('roles')->where('slug', 'manager')->value('id');
+            $staffRoleId = DB::table('roles')->where('slug', 'reception')->value('id');
+            $branchHeadRoleId = DB::table('roles')->where('slug', 'branch_head')->value('id');
+            $officerRoleId = DB::table('roles')->where('slug', 'branch_staff')->value('id');
+            $managerRoleId = DB::table('roles')->where('slug', 'management')->value('id');
 
             $generalDepartmentId = DB::table('departments')->insertGetId([
                 'code' => 'GEN',
@@ -48,8 +50,27 @@ class OfficeServiceSeeder extends Seeder
                 'updated_at' => $now,
             ]);
 
+            $generalBranchId = DB::table('branches')->insertGetId([
+                'code' => 'ADMIN', 'name' => 'Administration Branch', 'phone' => '+94-11-000-1000',
+                'email' => 'administration@example.office', 'location' => 'Ground Floor',
+                'description' => 'General administration and reception services.', 'is_active' => true,
+                'created_at' => $now, 'updated_at' => $now,
+            ]);
+
+            $recordsBranchId = DB::table('branches')->insertGetId([
+                'code' => 'REC', 'name' => 'Registration Branch', 'phone' => '+94-11-000-2000',
+                'email' => 'registration@example.office', 'location' => 'First Floor',
+                'description' => 'Certificates, registrations, and record verification.', 'is_active' => true,
+                'created_at' => $now, 'updated_at' => $now,
+            ]);
+
+            foreach ([['LAND', 'Land Branch'], ['SOCIAL', 'Social Services Branch'], ['SAMURDHI', 'Samurdhi Branch'], ['PENSION', 'Pension Branch'], ['ACCOUNTS', 'Accounts Branch'], ['DEV', 'Development Branch'], ['GN', 'Grama Niladhari Coordination Branch']] as [$code, $name]) {
+                DB::table('branches')->insert(['code' => $code, 'name' => $name, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
+            }
+
             $adminUserId = DB::table('users')->insertGetId([
                 'department_id' => null,
+                'branch_id' => null,
                 'name' => 'System Administrator',
                 'email' => 'admin@office.test',
                 'phone' => '+94770000001',
@@ -62,6 +83,7 @@ class OfficeServiceSeeder extends Seeder
 
             $staffUserId = DB::table('users')->insertGetId([
                 'department_id' => $generalDepartmentId,
+                'branch_id' => $generalBranchId,
                 'name' => 'Front Desk Staff',
                 'email' => 'staff@office.test',
                 'phone' => '+94770000002',
@@ -74,6 +96,7 @@ class OfficeServiceSeeder extends Seeder
 
             $officerUserId = DB::table('users')->insertGetId([
                 'department_id' => $recordsDepartmentId,
+                'branch_id' => $recordsBranchId,
                 'name' => 'Records Officer',
                 'email' => 'officer@office.test',
                 'phone' => '+94770000003',
@@ -84,8 +107,22 @@ class OfficeServiceSeeder extends Seeder
                 'updated_at' => $now,
             ]);
 
+            $branchHeadUserId = DB::table('users')->insertGetId([
+                'department_id' => $recordsDepartmentId,
+                'branch_id' => $recordsBranchId,
+                'name' => 'Registration Branch Head',
+                'email' => 'branchhead@office.test',
+                'phone' => '+94770000005',
+                'email_verified_at' => $now,
+                'password' => Hash::make('password'),
+                'is_active' => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
             $managerUserId = DB::table('users')->insertGetId([
                 'department_id' => null,
+                'branch_id' => null,
                 'name' => 'Office Manager',
                 'email' => 'manager@office.test',
                 'phone' => '+94770000004',
@@ -100,18 +137,21 @@ class OfficeServiceSeeder extends Seeder
                 ['role_id' => $adminRoleId, 'user_id' => $adminUserId, 'created_at' => $now, 'updated_at' => $now],
                 ['role_id' => $staffRoleId, 'user_id' => $staffUserId, 'created_at' => $now, 'updated_at' => $now],
                 ['role_id' => $officerRoleId, 'user_id' => $officerUserId, 'created_at' => $now, 'updated_at' => $now],
+                ['role_id' => $branchHeadRoleId, 'user_id' => $branchHeadUserId, 'created_at' => $now, 'updated_at' => $now],
                 ['role_id' => $managerRoleId, 'user_id' => $managerUserId, 'created_at' => $now, 'updated_at' => $now],
             ]);
 
+            DB::table('branches')->where('id', $recordsBranchId)->update(['branch_head_user_id' => $branchHeadUserId]);
+
             $certificateServiceId = DB::table('services')->insertGetId([
                 'department_id' => $recordsDepartmentId,
+                'branch_id' => $recordsBranchId,
                 'code' => 'CERT-ISSUE',
                 'name' => 'Certificate Issuing Service',
                 'description' => 'Issue official certificates after document verification.',
-                'fee_amount' => 1500.00,
                 'estimated_days' => 5,
                 'requires_appointment' => true,
-                'requires_payment' => true,
+                'fee_amount' => 1500.00,
                 'is_active' => true,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -162,13 +202,13 @@ class OfficeServiceSeeder extends Seeder
                 'person_id' => $personId,
                 'service_id' => $certificateServiceId,
                 'department_id' => $recordsDepartmentId,
+                'branch_id' => $recordsBranchId,
                 'assigned_officer_id' => $officerUserId,
                 'status_id' => $submittedStatusId,
                 'submitted_by' => $staffUserId,
                 'priority' => 'normal',
                 'subject' => 'Certificate request',
                 'description' => 'Applicant requested official certificate issuing service.',
-                'total_fee' => 1500.00,
                 'due_date' => $now->copy()->addDays(5)->toDateString(),
                 'submitted_at' => $now,
                 'created_at' => $now,
@@ -177,6 +217,8 @@ class OfficeServiceSeeder extends Seeder
 
             DB::table('application_status_histories')->insert([
                 'application_id' => $applicationId,
+                'department_id' => $recordsDepartmentId,
+                'branch_id' => $recordsBranchId,
                 'from_status_id' => null,
                 'to_status_id' => $submittedStatusId,
                 'changed_by' => $staffUserId,
@@ -211,34 +253,12 @@ class OfficeServiceSeeder extends Seeder
                 'updated_at' => $now,
             ]);
 
-            $cashMethodId = DB::table('payment_methods')->insertGetId([
-                'code' => 'CASH',
-                'name' => 'Cash',
-                'is_active' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-            DB::table('payments')->insert([
-                'receipt_no' => 'REC-2026-000001',
-                'application_id' => $applicationId,
-                'person_id' => $personId,
-                'payment_method_id' => $cashMethodId,
-                'received_by' => $staffUserId,
-                'amount' => 1500.00,
-                'status' => 'paid',
-                'transaction_reference' => null,
-                'remarks' => 'Paid at counter.',
-                'paid_at' => $now,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
             DB::table('appointments')->insert([
                 'appointment_no' => 'APT-2026-000001',
                 'application_id' => $applicationId,
                 'person_id' => $personId,
                 'department_id' => $recordsDepartmentId,
+                'branch_id' => $recordsBranchId,
                 'officer_id' => $officerUserId,
                 'created_by' => $staffUserId,
                 'appointment_date' => $now->copy()->addDay()->toDateString(),

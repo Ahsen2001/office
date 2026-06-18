@@ -10,17 +10,17 @@
         <input id="code" name="code" value="{{ old('code', $service->code) }}" class="form-control" required>
     </div>
     <div class="col-md-6">
-        <label class="form-label" for="department_id">Department</label>
-        <select id="department_id" name="department_id" class="form-select" required>
-            <option value="">Select department</option>
-            @foreach ($departments as $department)
-                <option value="{{ $department->id }}" @selected(old('department_id', $service->department_id) == $department->id)>{{ $department->name }}</option>
+        <label class="form-label" for="branch_id">Branch</label>
+        <select id="branch_id" name="branch_id" class="form-select" required>
+            <option value="">Select branch</option>
+            @foreach ($branches as $branch)
+                <option value="{{ $branch->id }}" @selected(old('branch_id', $service->branch_id) == $branch->id)>{{ $branch->name }}</option>
             @endforeach
         </select>
     </div>
     <div class="col-md-3">
         <label class="form-label" for="fee_amount">Service fee</label>
-        <input id="fee_amount" type="number" step="0.01" min="0" name="fee_amount" value="{{ old('fee_amount', $service->fee_amount ?? 0) }}" class="form-control" required>
+        <input id="fee_amount" type="number" min="0" step="0.01" name="fee_amount" value="{{ old('fee_amount', $service->fee_amount ?? 0) }}" class="form-control" required>
     </div>
     <div class="col-md-3">
         <label class="form-label" for="processing_time_days">Processing time</label>

@@ -64,11 +64,6 @@ class Person extends Model
         return $this->hasMany(ApplicationDocument::class);
     }
 
-    public function payments()
-    {
-        return $this->hasMany(Payment::class);
-    }
-
     public function appointments()
     {
         return $this->hasMany(Appointment::class);

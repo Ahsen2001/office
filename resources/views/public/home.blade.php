@@ -18,7 +18,7 @@
                 <div class="hero-trust-row">
                     <span><i class="fa-solid fa-qrcode me-1"></i> QR and barcode tracking</span>
                     <span><i class="fa-solid fa-lock me-1"></i> Privacy-conscious status checks</span>
-                    <span><i class="fa-solid fa-building me-1"></i> Department-based processing</span>
+                    <span><i class="fa-solid fa-building me-1"></i> Branch-based processing</span>
                 </div>
             </div>
         </div>
@@ -45,7 +45,7 @@
                         <div class="col-6">
                             <div class="public-card p-4 text-center">
                                 <div class="fs-2 fw-bold text-success">{{ number_format($departmentCount) }}+</div>
-                                <div class="text-muted small">Departments</div>
+                                <div class="text-muted small">Branches</div>
                             </div>
                         </div>
                     </div>
@@ -66,7 +66,7 @@
                     ['Certificate Requests', 'Official certificates and certified records.', 'fa-certificate'],
                     ['Document Verification', 'Verification of submitted records and identity documents.', 'fa-file-circle-check'],
                     ['License Requests', 'License applications, renewals, and related approvals.', 'fa-id-card'],
-                    ['Approvals', 'Department and management approval workflows.', 'fa-stamp'],
+                    ['Approvals', 'Branch and management approval workflows.', 'fa-stamp'],
                     ['Complaints', 'Formal complaint registration and follow-up.', 'fa-comments'],
                     ['Appointments', 'Scheduled visits with the correct department or officer.', 'fa-calendar-check'],
                 ];
@@ -160,7 +160,7 @@
                     ['Clear progress', 'See the current status and latest update without exposing private records.', 'fa-chart-line'],
                     ['Fewer repeat visits', 'Know when documents or appointments are needed before returning.', 'fa-route'],
                     ['Accountable processing', 'Every status change is recorded with department and staff context.', 'fa-clipboard-check'],
-                    ['Organized records', 'Applications, documents, payments, and appointments remain connected.', 'fa-folder-tree'],
+                    ['Organized records', 'Applications, documents, notes, and appointments remain connected.', 'fa-folder-tree'],
                 ] as [$title, $text, $icon])
                     <div class="col-md-6 col-xl-3">
                         <div class="card public-card">

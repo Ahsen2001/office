@@ -349,6 +349,25 @@ textarea.form-control {
     padding: 2rem;
 }
 
+.contact-layout > [class*="col-"] {
+    display: flex;
+}
+
+.contact-form-card,
+.contact-map {
+    width: 100%;
+}
+
+.contact-form-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.contact-map {
+    min-height: 100%;
+}
+
 .public-cta {
     background: #113d77;
     color: #fff;
@@ -420,6 +439,10 @@ textarea.form-control {
 
     .public-section {
         padding: 4rem 0;
+    }
+
+    .contact-map {
+        min-height: 320px;
     }
 }
 

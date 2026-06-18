@@ -14,6 +14,7 @@ class ServiceApplication extends Model
         'person_id',
         'service_id',
         'department_id',
+        'branch_id',
         'assigned_officer_id',
         'status_id',
         'submitted_by',
@@ -21,7 +22,6 @@ class ServiceApplication extends Model
         'subject',
         'description',
         'required_documents',
-        'total_fee',
         'due_date',
         'submitted_at',
         'approved_at',
@@ -35,7 +35,6 @@ class ServiceApplication extends Model
     protected function casts(): array
     {
         return [
-            'total_fee' => 'decimal:2',
             'required_documents' => 'array',
             'due_date' => 'date',
             'submitted_at' => 'datetime',
@@ -61,6 +60,20 @@ class ServiceApplication extends Model
         return $this->belongsTo(Department::class);
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function scopeVisibleTo($query, User $user)
+    {
+        if (! $user->isBranchRestricted()) {
+            return $query;
+        }
+
+        return $query->where('branch_id', $user->branch_id ?: 0);
+    }
+
     public function assignedOfficer()
     {
         return $this->belongsTo(User::class, 'assigned_officer_id');
@@ -79,11 +92,6 @@ class ServiceApplication extends Model
     public function documents()
     {
         return $this->hasMany(ApplicationDocument::class, 'application_id');
-    }
-
-    public function payments()
-    {
-        return $this->hasMany(Payment::class, 'application_id');
     }
 
     public function appointments()

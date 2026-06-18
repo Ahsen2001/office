@@ -10,10 +10,10 @@
                 <input type="search" name="search" value="{{ $search }}" class="form-control" placeholder="Search services">
             </div>
             <div class="col-md-4">
-                <select name="department_id" class="form-select">
-                    <option value="">All departments</option>
-                    @foreach ($departments as $department)
-                        <option value="{{ $department->id }}" @selected($departmentId == $department->id)>{{ $department->name }}</option>
+                <select name="branch_id" class="form-select">
+                    <option value="">All branches</option>
+                    @foreach ($branches as $branch)
+                        <option value="{{ $branch->id }}" @selected($branchId == $branch->id)>{{ $branch->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -21,7 +21,7 @@
                 <button class="btn btn-outline-primary w-100" type="submit"><i class="fa-solid fa-search me-1"></i> Search</button>
             </div>
         </form>
-        <a href="{{ route('admin.services.create') }}" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Add Service</a>
+        @if(auth()->user()->hasRole('admin'))<a href="{{ route('admin.services.create') }}" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Add Service</a>@endif
     </div>
 
     <div class="card soft-card">
@@ -30,7 +30,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Service</th>
-                        <th>Department</th>
+                        <th>Branch</th>
                         <th>Fee</th>
                         <th>Processing</th>
                         <th>Status</th>
@@ -44,8 +44,8 @@
                                 <div class="fw-semibold">{{ $service->name }}</div>
                                 <div class="text-muted small">{{ $service->code }}</div>
                             </td>
-                            <td>{{ $service->department?->name }}</td>
-                            <td>{{ number_format($service->fee_amount, 2) }}</td>
+                            <td>{{ $service->branch?->name }}</td>
+                            <td>{{ number_format((float) $service->fee_amount, 2) }}</td>
                             <td>{{ $service->processing_time_days ?? $service->estimated_days ?? '-' }} days</td>
                             <td>
                                 <span class="badge {{ $service->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">
@@ -53,12 +53,14 @@
                                 </span>
                             </td>
                             <td class="text-end">
+                                @if(auth()->user()->hasRole('admin'))
                                 <a href="{{ route('admin.services.edit', $service) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                                 <form method="POST" action="{{ route('admin.services.destroy', $service) }}" class="d-inline" onsubmit="return confirm('Delete this service?')">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                                 </form>
+                                @endif
                             </td>
                         </tr>
                     @empty

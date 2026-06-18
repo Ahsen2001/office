@@ -20,6 +20,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'department_id',
+        'branch_id',
         'name',
         'email',
         'phone',
@@ -56,9 +57,19 @@ class User extends Authenticatable
         return $this->belongsTo(Department::class);
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
     public function roles()
     {
         return $this->belongsToMany(Role::class)->withTimestamps();
+    }
+
+    public function assignedApplications()
+    {
+        return $this->hasMany(ServiceApplication::class, 'assigned_officer_id');
     }
 
     public function hasRole(string ...$roles): bool
@@ -74,10 +85,16 @@ class User extends Authenticatable
     {
         return match (true) {
             $this->hasRole('admin') => 'admin.dashboard',
-            $this->hasRole('staff') => 'staff.dashboard',
-            $this->hasRole('department_officer') => 'officer.dashboard',
-            $this->hasRole('manager') => 'manager.dashboard',
+            $this->hasRole('management') => 'management.dashboard',
+            $this->hasRole('reception') => 'reception.dashboard',
+            $this->hasRole('branch_head') => 'branch-head.dashboard',
+            $this->hasRole('branch_staff') => 'branch-staff.dashboard',
             default => 'dashboard',
         };
+    }
+
+    public function isBranchRestricted(): bool
+    {
+        return $this->hasRole('branch_head', 'branch_staff');
     }
 }

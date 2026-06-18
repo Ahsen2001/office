@@ -5,8 +5,7 @@ namespace App\Http\Controllers\Manager;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\ApplicationStatus;
-use App\Models\Department;
-use App\Models\Payment;
+use App\Models\Branch;
 use App\Models\Person;
 use App\Models\ServiceApplication;
 use App\Models\User;
@@ -22,8 +21,7 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $filters = $this->filters($request);
-        $applications = $this->applicationQuery($filters)->with(['person', 'service', 'department', 'status', 'submitter'])->get();
-        $payments = $this->paymentQuery($filters)->with(['person', 'application', 'service', 'method'])->get();
+        $applications = $this->applicationQuery($filters)->with(['person', 'service', 'branch', 'status', 'submitter'])->get();
         $appointments = $this->appointmentQuery($filters)->with(['person', 'application', 'department', 'officer'])->get();
         $people = Person::query()
             ->when($filters['date_from'], fn ($query) => $query->whereDate('registered_at', '>=', $filters['date_from']))
@@ -32,7 +30,7 @@ class ReportController extends Controller
 
         return view('manager.reports.index', [
             'filters' => $filters,
-            'departments' => Department::orderBy('name')->get(),
+            'departments' => Branch::orderBy('name')->get(),
             'statuses' => ApplicationStatus::orderBy('sort_order')->get(),
             'summary' => [
                 'people' => $people->count(),
@@ -40,13 +38,11 @@ class ReportController extends Controller
                 'pending' => $applications->whereIn('status.code', ['submitted', 'pending', 'under_review', 'processing', 'waiting_for_documents'])->count(),
                 'completed' => $applications->where('status.code', 'completed')->count(),
                 'rejected' => $applications->where('status.code', 'rejected')->count(),
-                'payments' => $payments->sum('amount'),
                 'appointments' => $appointments->count(),
             ],
             'applicationsByStatus' => $applications->groupBy(fn ($application) => $application->status?->name ?? 'Unknown')->map->count(),
-            'applicationsByDepartment' => $applications->groupBy(fn ($application) => $application->department?->name ?? 'Unknown')->map->count(),
+            'applicationsByDepartment' => $applications->groupBy(fn ($application) => $application->branch?->name ?? 'Unknown')->map->count(),
             'staffPerformance' => $applications->groupBy(fn ($application) => $application->submitter?->name ?? 'Unassigned')->map->count()->sortDesc()->take(10),
-            'paymentsByStatus' => $payments->groupBy('status')->map->sum('amount'),
             'appointmentsByStatus' => $appointments->groupBy('status')->map->count(),
             'recentApplications' => $applications->sortByDesc('submitted_at')->take(10),
         ]);
@@ -85,15 +81,6 @@ class ReportController extends Controller
                     'Phone' => $person->phone,
                     'Registered At' => optional($person->registered_at)->toDateTimeString(),
                 ]),
-            'payments' => $this->paymentQuery($filters)->with(['person', 'application', 'service', 'method'])->get()->map(fn (Payment $payment) => [
-                'Receipt' => $payment->receipt_no,
-                'Person' => $payment->person?->full_name,
-                'Application' => $payment->application?->application_no,
-                'Service' => $payment->service?->name,
-                'Status' => $payment->status,
-                'Amount' => $payment->amount,
-                'Date' => optional($payment->payment_date)->toDateTimeString(),
-            ]),
             'appointments' => $this->appointmentQuery($filters)->with(['person', 'department', 'officer'])->get()->map(fn (Appointment $appointment) => [
                 'Appointment No' => $appointment->appointment_no,
                 'Person' => $appointment->person?->full_name,
@@ -103,16 +90,16 @@ class ReportController extends Controller
                 'Date' => optional($appointment->appointment_date)->format('Y-m-d'),
                 'Time' => optional($appointment->start_time)->format('H:i'),
             ]),
-            'staff' => User::whereHas('roles', fn ($query) => $query->where('slug', 'staff'))->get()->map(fn (User $user) => [
+            'staff' => User::whereHas('roles', fn ($query) => $query->whereIn('slug', ['reception', 'branch_head', 'branch_staff']))->get()->map(fn (User $user) => [
                 'Staff' => $user->name,
                 'Applications Submitted' => ServiceApplication::where('submitted_by', $user->id)->count(),
                 'People Registered' => Person::where('registered_by', $user->id)->count(),
             ]),
-            default => $this->applicationReportQuery($report, $filters)->with(['person', 'service', 'department', 'status', 'submitter'])->get()->map(fn (ServiceApplication $application) => [
+            default => $this->applicationReportQuery($report, $filters)->with(['person', 'service', 'branch', 'status', 'submitter'])->get()->map(fn (ServiceApplication $application) => [
                 'Application No' => $application->application_no,
                 'Person' => $application->person?->full_name,
                 'Service' => $application->service?->name,
-                'Department' => $application->department?->name,
+                'Branch' => $application->branch?->name,
                 'Status' => $application->status?->name,
                 'Submitted By' => $application->submitter?->name,
                 'Submitted At' => optional($application->submitted_at)->toDateTimeString(),
@@ -133,16 +120,8 @@ class ReportController extends Controller
         return ServiceApplication::query()
             ->when($filters['date_from'], fn ($query) => $query->whereDate('submitted_at', '>=', $filters['date_from']))
             ->when($filters['date_to'], fn ($query) => $query->whereDate('submitted_at', '<=', $filters['date_to']))
-            ->when($filters['department_id'], fn ($query) => $query->where('department_id', $filters['department_id']))
+            ->when($filters['department_id'], fn ($query) => $query->where('branch_id', $filters['department_id']))
             ->when($filters['status_id'], fn ($query) => $query->where('status_id', $filters['status_id']));
-    }
-
-    private function paymentQuery(array $filters): Builder
-    {
-        return Payment::query()
-            ->when($filters['date_from'], fn ($query) => $query->whereDate('payment_date', '>=', $filters['date_from']))
-            ->when($filters['date_to'], fn ($query) => $query->whereDate('payment_date', '<=', $filters['date_to']))
-            ->when($filters['department_id'], fn ($query) => $query->whereHas('application', fn ($applicationQuery) => $applicationQuery->where('department_id', $filters['department_id'])));
     }
 
     private function appointmentQuery(array $filters): Builder

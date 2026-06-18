@@ -14,10 +14,8 @@ return new class extends Migration
             $table->string('code', 40)->unique();
             $table->string('name', 180);
             $table->text('description')->nullable();
-            $table->decimal('fee_amount', 12, 2)->default(0);
             $table->unsignedSmallInteger('estimated_days')->nullable();
             $table->boolean('requires_appointment')->default(false);
-            $table->boolean('requires_payment')->default(false);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
@@ -46,7 +44,6 @@ return new class extends Migration
             $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal');
             $table->text('subject')->nullable();
             $table->longText('description')->nullable();
-            $table->decimal('total_fee', 12, 2)->default(0);
             $table->date('due_date')->nullable();
             $table->timestamp('submitted_at')->useCurrent();
             $table->timestamp('approved_at')->nullable();

@@ -11,7 +11,7 @@
                 <input type="search" name="q" value="{{ $filters['q'] }}" class="form-control" placeholder="Name, person ID, NIC/passport, phone, application no">
             </div>
             <div class="col-md-2">
-                <label class="form-label">Department</label>
+                <label class="form-label">Branch</label>
                 <select name="department_id" class="form-select">
                     <option value="">All</option>
                     @foreach($departments as $department)
@@ -77,16 +77,16 @@
                     <h2 class="h5 mb-3">Applications</h2>
                     <div class="table-responsive">
                         <table class="table align-middle">
-                            <thead><tr><th>No</th><th>Person</th><th>Department</th><th>Service</th><th>Status</th><th></th></tr></thead>
+                            <thead><tr><th>No</th><th>Person</th><th>Branch</th><th>Service</th><th>Status</th><th></th></tr></thead>
                             <tbody>
                                 @forelse($applications as $application)
                                     <tr>
                                         <td>{{ $application->application_no }}</td>
                                         <td>{{ $application->person?->full_name }}</td>
-                                        <td>{{ $application->department?->name }}</td>
+                                        <td>{{ $application->branch?->name }}</td>
                                         <td>{{ $application->service?->name }}</td>
                                         <td><span class="badge text-bg-secondary">{{ $application->status?->name }}</span></td>
-                                        <td><a href="{{ route('staff.applications.show', $application) }}" class="btn btn-sm btn-outline-primary">Open</a></td>
+                                        <td><a href="{{ auth()->user()->hasRole('management') ? route('management.applications.show', $application) : route('staff.applications.show', $application) }}" class="btn btn-sm btn-outline-primary">Open</a></td>
                                     </tr>
                                 @empty
                                     <tr><td colspan="6" class="text-center text-muted">No applications found.</td></tr>

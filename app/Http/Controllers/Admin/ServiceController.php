@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Department;
+use App\Models\Branch;
 use App\Models\Service;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -16,9 +16,10 @@ class ServiceController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
-        $departmentId = $request->integer('department_id') ?: null;
+        $branchId = $request->integer('branch_id') ?: null;
 
-        $services = Service::with('department')
+        $services = Service::with('branch')
+            ->when($request->user()->isBranchRestricted(), fn ($query) => $query->where('branch_id', $request->user()->branch_id))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
@@ -26,7 +27,7 @@ class ServiceController extends Controller
                         ->orWhere('description', 'like', "%{$search}%");
                 });
             })
-            ->when($departmentId, fn ($query) => $query->where('department_id', $departmentId))
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -34,16 +35,16 @@ class ServiceController extends Controller
         return view('admin.services.index', [
             'services' => $services,
             'search' => $search,
-            'departmentId' => $departmentId,
-            'departments' => Department::orderBy('name')->get(),
+            'branchId' => $branchId,
+            'branches' => Branch::visibleTo($request->user())->orderBy('name')->get(),
         ]);
     }
 
     public function create(): View
     {
         return view('admin.services.create', [
-            'service' => new Service(['is_active' => true, 'fee_amount' => 0]),
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
+            'service' => new Service(['is_active' => true]),
+            'branches' => Branch::where('is_active', true)->orderBy('name')->get(),
             'requiredDocuments' => [],
         ]);
     }
@@ -60,7 +61,7 @@ class ServiceController extends Controller
     {
         return view('admin.services.edit', [
             'service' => $service,
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
+            'branches' => Branch::where('is_active', true)->orderBy('name')->get(),
             'requiredDocuments' => $service->required_documents ?? [],
         ]);
     }
@@ -88,10 +89,10 @@ class ServiceController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:180'],
             'code' => ['required', 'string', 'max:40', Rule::unique('services', 'code')->ignore($service)],
-            'department_id' => ['required', 'exists:departments,id'],
+            'branch_id' => ['required', 'exists:branches,id'],
             'description' => ['nullable', 'string'],
             'required_documents' => ['nullable', 'string'],
-            'fee_amount' => ['required', 'numeric', 'min:0'],
+            'fee_amount' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'processing_time_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -102,7 +103,7 @@ class ServiceController extends Controller
             ->values()
             ->all();
         $data['estimated_days'] = $data['processing_time_days'];
-        $data['requires_payment'] = (float) $data['fee_amount'] > 0;
+        $data['department_id'] = $data['branch_id'];
         $data['is_active'] = $request->boolean('is_active');
 
         return $data;

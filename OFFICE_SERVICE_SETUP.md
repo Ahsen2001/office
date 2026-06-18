@@ -181,7 +181,6 @@ app/Http/Controllers/Admin/DashboardController.php
 app/Http/Controllers/Staff/PersonController.php
 app/Http/Controllers/Staff/ServiceApplicationController.php
 app/Http/Controllers/Staff/DocumentController.php
-app/Http/Controllers/Staff/PaymentController.php
 app/Http/Controllers/Staff/AppointmentController.php
 app/Http/Controllers/Staff/QrBarcodeController.php
 app/Http/Controllers/DepartmentOfficer/ApplicationProcessingController.php
@@ -202,8 +201,6 @@ ServiceApplication
 ApplicationStatusHistory
 DocumentType
 ApplicationDocument
-PaymentMethod
-Payment
 Appointment
 ApplicationNote
 OfficeNotification

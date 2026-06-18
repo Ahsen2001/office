@@ -13,9 +13,8 @@
         <div class="col-md-6"><strong>Person:</strong> {{ $application->person?->full_name }}</div>
         <div class="col-md-6"><strong>Person ID:</strong> {{ $application->person?->person_code }}</div>
         <div class="col-md-6"><strong>Service:</strong> {{ $application->service?->name }}</div>
-        <div class="col-md-6"><strong>Department:</strong> {{ $application->department?->name }}</div>
+        <div class="col-md-6"><strong>Branch:</strong> {{ $application->branch?->name }}</div>
         <div class="col-md-6"><strong>Status:</strong> {{ $application->status?->name }}</div>
-        <div class="col-md-6"><strong>Fee:</strong> {{ number_format($application->total_fee, 2) }}</div>
     </div>
 </div></div>
 @endsection

@@ -21,9 +21,8 @@ class UpdateUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:150'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:150', Rule::unique('users', 'email')->ignore($managedUser)],
             'phone' => ['nullable', 'string', 'max:30'],
-            'department_id' => ['nullable', 'exists:departments,id'],
-            'roles' => ['required', 'array', 'min:1'],
-            'roles.*' => ['exists:roles,id'],
+            'branch_id' => ['nullable', 'exists:branches,id', 'required_if:role_slug,branch_head,branch_staff'],
+            'role_slug' => ['required', 'exists:roles,slug'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'is_active' => ['nullable', 'boolean'],
         ];

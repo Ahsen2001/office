@@ -19,7 +19,7 @@
                     <tr>
                         <th>User</th>
                         <th>Role</th>
-                        <th>Department</th>
+                        <th>Branch</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -32,7 +32,7 @@
                                 <div class="text-muted small">{{ $user->email }}</div>
                             </td>
                             <td>{{ $user->roles->pluck('name')->join(', ') }}</td>
-                            <td>{{ $user->department?->name ?? '-' }}</td>
+                            <td>{{ $user->branch?->name ?? 'All branches' }}</td>
                             <td><span class="badge {{ $user->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $user->is_active ? 'Active' : 'Inactive' }}</span></td>
                             <td class="text-end">
                                 <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-outline-primary">Edit</a>

@@ -20,7 +20,7 @@ class PublicApplicationStatusController extends Controller
             $nic = trim($request->string('nic')->toString());
 
             $applications = ServiceApplication::query()
-                ->with(['person', 'service', 'department', 'status', 'documents.documentType', 'appointments'])
+                ->with(['person', 'service', 'branch', 'assignedOfficer', 'status', 'documents.documentType', 'appointments'])
                 ->when($applicationNo, fn ($query) => $query->where('application_no', '=', $applicationNo))
                 ->when($personCode, fn ($query) => $query->whereHas('person', fn ($personQuery) => $personQuery
                     ->where('person_code', '=', $personCode)

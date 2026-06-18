@@ -14,11 +14,11 @@
         <input id="phone" name="phone" value="{{ old('phone', $user->phone) }}" class="form-control">
     </div>
     <div class="col-md-6">
-        <label class="form-label" for="department_id">Department</label>
-        <select id="department_id" name="department_id" class="form-select">
-            <option value="">No department</option>
-            @foreach ($departments as $department)
-                <option value="{{ $department->id }}" @selected(old('department_id', $user->department_id) == $department->id)>{{ $department->name }}</option>
+        <label class="form-label" for="branch_id">Branch</label>
+        <select id="branch_id" name="branch_id" class="form-select">
+            <option value="">No branch / all branches</option>
+            @foreach ($branches as $branch)
+                <option value="{{ $branch->id }}" @selected(old('branch_id', $user->branch_id) == $branch->id)>{{ $branch->name }}</option>
             @endforeach
         </select>
     </div>
@@ -32,15 +32,14 @@
         <input id="password_confirmation" type="password" name="password_confirmation" class="form-control" @if(! $user->exists) required @endif>
     </div>
     <div class="col-12">
-        <label class="form-label">Roles</label>
-        <div class="d-flex flex-wrap gap-3">
+        <label class="form-label" for="role_slug">Role</label>
+        <select id="role_slug" name="role_slug" class="form-select" required>
+            <option value="">Select role</option>
             @foreach ($roles as $role)
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="roles[]" value="{{ $role->id }}" id="role_{{ $role->id }}" @checked(in_array($role->id, old('roles', $selectedRoles)))>
-                    <label class="form-check-label" for="role_{{ $role->id }}">{{ $role->name }}</label>
-                </div>
+                <option value="{{ $role->slug }}" @selected(old('role_slug', $selectedRole) === $role->slug)>{{ $role->name }}</option>
             @endforeach
-        </div>
+        </select>
+        <div class="form-text">Branch Head and Branch Staff must be assigned to a branch.</div>
     </div>
     <div class="col-12">
         <div class="form-check form-switch">

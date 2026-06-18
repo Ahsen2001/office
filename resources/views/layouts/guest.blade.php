@@ -112,7 +112,7 @@
                 <div>
                     <a href="{{ route('public.home') }}" class="auth-mark mb-4 text-white text-decoration-none" aria-label="Back to home"><i class="fa-solid fa-building-columns fs-3"></i></a>
                     <h1 class="display-6 fw-bold mb-3">Office Service Management System</h1>
-                    <p class="lead opacity-75 mb-0">Secure service intake, QR tracking, department processing, payments, appointments, and reports in one office workspace.</p>
+                    <p class="lead opacity-75 mb-0">Secure service intake, QR tracking, branch processing, appointments, and reports in one office workspace.</p>
                 </div>
                 <div class="row g-3 mt-5">
                     <div class="col-6">

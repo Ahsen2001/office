@@ -20,7 +20,7 @@
                         <h2>Accessible, accountable public services</h2>
                         <p>Our office receives requests from people, identifies the responsible department, and follows each application through review, processing, approval, completion, or another clearly recorded outcome.</p>
                     </div>
-                    <p class="text-muted">The management system reduces fragmented paper-based work by connecting the person, service, department, assigned officer, documents, payments, appointments, and status history in one authorized workflow.</p>
+                    <p class="text-muted">The management system reduces fragmented paper-based work by connecting the person, service, department, assigned officer, documents, appointments, and status history in one authorized workflow.</p>
                 </div>
                 <div class="col-lg-6">
                     <div class="row g-3">
@@ -75,7 +75,7 @@
                     <div class="row g-3">
                         <div class="col-md-6"><h3 class="h6"><i class="fa-solid fa-check text-success me-2"></i>Fewer duplicate records</h3><p class="text-muted">Unique identifiers help staff confirm the correct profile before creating new applications.</p></div>
                         <div class="col-md-6"><h3 class="h6"><i class="fa-solid fa-check text-success me-2"></i>Shorter service time</h3><p class="text-muted">Scanning avoids repeated manual searches by name, phone, or identification number.</p></div>
-                        <div class="col-md-6"><h3 class="h6"><i class="fa-solid fa-check text-success me-2"></i>Connected history</h3><p class="text-muted">Staff can see authorized application, document, payment, note, and appointment history.</p></div>
+                        <div class="col-md-6"><h3 class="h6"><i class="fa-solid fa-check text-success me-2"></i>Connected history</h3><p class="text-muted">Staff can see authorized application, document, note, and appointment history.</p></div>
                         <div class="col-md-6"><h3 class="h6"><i class="fa-solid fa-check text-success me-2"></i>Public convenience</h3><p class="text-muted">People can use QR values for limited status checks without seeing private profile data.</p></div>
                     </div>
                 </div>

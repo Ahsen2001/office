@@ -11,7 +11,7 @@ Database name: `Office_Service`
 - One `person` has many `service_applications`.
 - One `service_application` belongs to one `person`, one `service`, one `department`, and one assigned officer from `users`.
 - One `service_application` has many `application_status_histories`.
-- One `service_application` has many `application_documents`, `payments`, `appointments`, `application_notes`, and `notifications`.
+- One `service_application` has many `application_documents`, `appointments`, `application_notes`, and `notifications`.
 - Users can have multiple roles through `role_user`.
 
 ## Tables
@@ -99,10 +99,8 @@ Default roles: Admin, Staff, Department Officer, Manager.
 | code | VARCHAR(40) | UNIQUE | Service code |
 | name | VARCHAR(180) |  | Service name |
 | description | TEXT |  | Description |
-| fee_amount | DECIMAL(12,2) |  | Service fee |
 | estimated_days | SMALLINT UNSIGNED |  | Expected duration |
 | requires_appointment | BOOLEAN |  | Appointment required |
-| requires_payment | BOOLEAN |  | Payment required |
 | is_active | BOOLEAN |  | Active flag |
 | created_at, updated_at | TIMESTAMP |  | Laravel timestamps |
 
@@ -133,7 +131,6 @@ Default roles: Admin, Staff, Department Officer, Manager.
 | priority | ENUM |  | low, normal, high, urgent |
 | subject | TEXT |  | Short subject |
 | description | LONGTEXT |  | Application details |
-| total_fee | DECIMAL(12,2) |  | Fee due |
 | due_date | DATE |  | Due date |
 | submitted_at | TIMESTAMP |  | Submission timestamp |
 | approved_at, rejected_at, completed_at, cancelled_at | TIMESTAMP |  | Lifecycle timestamps |
@@ -162,14 +159,6 @@ Stores document categories such as NIC, birth certificate, proof of address, and
 ### application_documents
 
 Stores uploaded files connected to a person and application, with upload and verification information.
-
-### payment_methods
-
-Stores payment methods such as cash, card, bank transfer, and online payment.
-
-### payments
-
-Stores receipt number, amount, method, payment status, paid date, and receiving user.
 
 ### appointments
 

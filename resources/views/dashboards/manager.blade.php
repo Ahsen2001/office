@@ -7,9 +7,9 @@
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1">Performance overview</h1>
-            <p class="text-muted mb-0">Monitor application volume, revenue, reports, and department performance.</p>
+            <p class="text-muted mb-0">Monitor application volume, pending work, reports, and department performance.</p>
         </div>
-        <a href="{{ route('manager.reports.index') }}" class="btn btn-primary"><i class="fa-solid fa-chart-line me-1"></i> Open Reports</a>
+        <a href="{{ route('management.reports.index') }}" class="btn btn-primary"><i class="fa-solid fa-chart-line me-1"></i> Open Reports</a>
     </div>
 
     <div class="row g-3">
@@ -25,9 +25,9 @@
         <div class="col-md-6">
             <div class="card soft-card metric-card h-100">
                 <div class="card-body">
-                    <div class="metric-icon success mb-3"><i class="fa-solid fa-money-bill-wave"></i></div>
-                    <div class="text-muted">Paid Total</div>
-                    <div class="fs-3 fw-bold">{{ number_format($paidTotal, 2) }}</div>
+                    <div class="metric-icon success mb-3"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <div class="text-muted">Pending Applications</div>
+                    <div class="fs-3 fw-bold">{{ number_format($pendingCount) }}</div>
                 </div>
             </div>
         </div>

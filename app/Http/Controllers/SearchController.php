@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ApplicationStatus;
-use App\Models\Department;
+use App\Models\Branch;
 use App\Models\Person;
 use App\Models\Service;
 use App\Models\ServiceApplication;
@@ -19,7 +19,7 @@ class SearchController extends Controller
 
         return view('search.index', [
             'filters' => $filters,
-            'departments' => Department::orderBy('name')->get(),
+            'departments' => Branch::visibleTo($request->user())->orderBy('name')->get(),
             'statuses' => ApplicationStatus::orderBy('sort_order')->get(),
             'services' => Service::orderBy('name')->get(),
             'people' => $this->peopleQuery($filters)->paginate(10, ['*'], 'people_page')->withQueryString(),
@@ -36,6 +36,7 @@ class SearchController extends Controller
         }
 
         $people = Person::query()
+            ->when($request->user()->isBranchRestricted(), fn ($query) => $query->whereHas('applications', fn ($applications) => $applications->where('branch_id', $request->user()->branch_id)))
             ->select(['id', 'full_name', 'person_code', 'national_id', 'phone'])
             ->where(function ($query) use ($term) {
                 $query->where('full_name', 'like', "{$term}%")
@@ -50,10 +51,11 @@ class SearchController extends Controller
                 'type' => 'Person',
                 'label' => $person->full_name,
                 'meta' => $person->person_code.' | '.$person->phone,
-                'url' => route('staff.people.show', $person),
+                'url' => $request->user()->hasRole('management') ? route('management.applications.index', ['search' => $person->person_code]) : route('staff.people.show', $person),
             ]);
 
         $applications = ServiceApplication::query()
+            ->visibleTo($request->user())
             ->with(['person:id,full_name', 'status:id,name'])
             ->select(['id', 'application_no', 'person_id', 'status_id'])
             ->where('application_no', 'like', "{$term}%")
@@ -63,7 +65,7 @@ class SearchController extends Controller
                 'type' => 'Application',
                 'label' => $application->application_no,
                 'meta' => ($application->person?->full_name ?? 'Unknown').' | '.($application->status?->name ?? ''),
-                'url' => route('staff.applications.show', $application),
+                'url' => $request->user()->hasRole('management') ? route('management.applications.show', $application) : route('staff.applications.show', $application),
             ]);
 
         return response()->json($people->merge($applications)->values());
@@ -74,6 +76,7 @@ class SearchController extends Controller
         $term = $filters['q'];
 
         return Person::query()
+            ->when(auth()->user()?->isBranchRestricted(), fn ($query) => $query->whereHas('applications', fn ($applications) => $applications->where('branch_id', auth()->user()->branch_id)))
             ->when($term, fn ($query) => $query->where(function ($query) use ($term) {
                 $query->where('full_name', 'like', "%{$term}%")
                     ->orWhere('person_code', 'like', "%{$term}%")
@@ -90,7 +93,8 @@ class SearchController extends Controller
     {
         $term = $filters['q'];
 
-        return ServiceApplication::with(['person', 'department', 'service', 'status'])
+        return ServiceApplication::with(['person', 'branch', 'service', 'status'])
+            ->visibleTo(auth()->user())
             ->when($term, fn ($query) => $query->where(function ($query) use ($term) {
                 $query->where('application_no', 'like', "%{$term}%")
                     ->orWhereHas('person', fn ($personQuery) => $personQuery
@@ -99,11 +103,11 @@ class SearchController extends Controller
                         ->orWhere('national_id', 'like', "%{$term}%")
                         ->orWhere('passport_no', 'like', "%{$term}%")
                         ->orWhere('phone', 'like', "%{$term}%"))
-                    ->orWhereHas('department', fn ($departmentQuery) => $departmentQuery->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('branch', fn ($departmentQuery) => $departmentQuery->where('name', 'like', "%{$term}%"))
                     ->orWhereHas('service', fn ($serviceQuery) => $serviceQuery->where('name', 'like', "%{$term}%"))
                     ->orWhereHas('status', fn ($statusQuery) => $statusQuery->where('name', 'like', "%{$term}%"));
             }))
-            ->when($filters['department_id'], fn ($query) => $query->where('department_id', $filters['department_id']))
+            ->when($filters['department_id'], fn ($query) => $query->where('branch_id', $filters['department_id']))
             ->when($filters['service_id'], fn ($query) => $query->where('service_id', $filters['service_id']))
             ->when($filters['status_id'], fn ($query) => $query->where('status_id', $filters['status_id']))
             ->when($filters['date_from'], fn ($query) => $query->whereDate('submitted_at', '>=', $filters['date_from']))

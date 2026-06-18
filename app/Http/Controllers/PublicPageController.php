@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
+use App\Models\Branch;
 use App\Models\Service;
 use App\Models\SystemSetting;
 use Illuminate\Http\Request;
@@ -14,13 +14,13 @@ class PublicPageController extends Controller
     {
         return view('public.home', [
             'featuredServices' => Service::query()
-                ->with('department')
+                ->with('branch')
                 ->where('is_active', '=', true)
                 ->orderBy('name', 'asc')
                 ->limit(6)
                 ->get(),
             'serviceCount' => Service::query()->where('is_active', '=', true)->count(),
-            'departmentCount' => Department::query()->where('is_active', '=', true)->count(),
+            'departmentCount' => Branch::query()->where('is_active', '=', true)->count(),
             'office' => $this->officeDetails(),
         ]);
     }
@@ -35,28 +35,28 @@ class PublicPageController extends Controller
     public function services(Request $request): View
     {
         $search = trim($request->string('search')->toString());
-        $departmentId = $request->integer('department_id') ?: null;
+        $departmentId = $request->integer('branch_id') ?: null;
 
         $services = Service::query()
-            ->with('department')
+            ->with('branch')
             ->where('is_active', '=', true)
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('code', 'like', "%{$search}%")
                         ->orWhere('description', 'like', "%{$search}%")
-                        ->orWhereHas('department', fn ($departmentQuery) => $departmentQuery
+                        ->orWhereHas('branch', fn ($departmentQuery) => $departmentQuery
                             ->where('name', 'like', "%{$search}%"));
                 });
             })
-            ->when($departmentId, fn ($query) => $query->where('department_id', '=', $departmentId))
+            ->when($departmentId, fn ($query) => $query->where('branch_id', '=', $departmentId))
             ->orderBy('name', 'asc')
             ->paginate(9)
             ->withQueryString();
 
         return view('public.services', [
             'services' => $services,
-            'departments' => Department::query()
+            'departments' => Branch::query()
                 ->where('is_active', '=', true)
                 ->orderBy('name', 'asc')
                 ->get(),

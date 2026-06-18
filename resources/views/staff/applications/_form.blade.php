@@ -14,16 +14,16 @@
         <select name="service_id" class="form-select" required>
             <option value="">Select service</option>
             @foreach($services as $service)
-                <option value="{{ $service->id }}" @selected(old('service_id', $application->service_id) == $service->id)>{{ $service->name }} - {{ $service->department?->name }}</option>
+                <option value="{{ $service->id }}" @selected(old('service_id', $application->service_id) == $service->id)>{{ $service->name }} - {{ $service->branch?->name }}</option>
             @endforeach
         </select>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Department</label>
+        <label class="form-label">Branch</label>
         <select name="department_id" class="form-select">
-            <option value="">Use service department</option>
+            <option value="">Use service branch</option>
             @foreach($departments as $department)
-                <option value="{{ $department->id }}" @selected(old('department_id', $application->department_id) == $department->id)>{{ $department->name }}</option>
+                <option value="{{ $department->id }}" @selected(old('department_id', $application->branch_id ?: $application->department_id) == $department->id)>{{ $department->name }}</option>
             @endforeach
         </select>
     </div>

@@ -45,7 +45,7 @@
                 <span class="public-icon green"><i class="fa-solid fa-user-shield"></i></span>
                 <div>
                     <h2 class="h6 mb-1">Your privacy is protected</h2>
-                    <p class="text-muted mb-0">This page never displays full addresses, contact numbers, uploaded files, internal notes, staff remarks, or payment details.</p>
+                    <p class="text-muted mb-0">This page never displays full addresses, personal contact numbers, uploaded files, internal notes, or staff remarks.</p>
                 </div>
             </div>
 
@@ -82,11 +82,12 @@
                                 </div>
                                 <div class="row g-4">
                                     <div class="col-md-6 col-xl-3"><div class="service-meta-label">Service</div><div class="fw-semibold">{{ $item->service?->name }}</div></div>
-                                    <div class="col-md-6 col-xl-3"><div class="service-meta-label">Department</div><div class="fw-semibold">{{ $item->department?->name }}</div></div>
+                                    <div class="col-md-6 col-xl-3"><div class="service-meta-label">Branch</div><div class="fw-semibold">{{ $item->branch?->name }}</div></div>
                                     <div class="col-md-6 col-xl-3"><div class="service-meta-label">Submitted date</div><div class="fw-semibold">{{ $item->submitted_at?->format('Y-m-d') ?? 'Not recorded' }}</div></div>
                                     <div class="col-md-6 col-xl-3"><div class="service-meta-label">Last updated</div><div class="fw-semibold">{{ $item->updated_at?->format('Y-m-d H:i') ?? 'Not recorded' }}</div></div>
                                     <div class="col-md-6"><div class="service-meta-label">Missing documents</div><div class="fw-semibold">{{ $missing->isEmpty() ? 'None currently requested' : $missing->implode(', ') }}</div></div>
                                     <div class="col-md-6"><div class="service-meta-label">Appointment</div><div class="fw-semibold">{{ $appointment ? $appointment->appointment_date?->format('Y-m-d').' at '.$appointment->start_time?->format('H:i') : 'No upcoming appointment' }}</div></div>
+                                    <div class="col-md-6"><div class="service-meta-label">In-charge officer</div><div class="fw-semibold">{{ $item->assignedOfficer?->name ?? 'Not assigned' }}</div><div class="small text-muted">{{ $item->assignedOfficer?->phone ?? 'Contact the branch office' }}</div></div>
                                 </div>
                             </div>
                         </article>

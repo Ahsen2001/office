@@ -9,16 +9,16 @@ class ApplicationDocumentPolicy
 {
     public function view(User $user, ApplicationDocument $document): bool
     {
-        if ($user->hasRole('admin', 'staff', 'manager')) {
+        if ($user->hasRole('admin', 'management', 'reception')) {
             return true;
         }
 
         $document->loadMissing('application');
 
-        return $user->hasRole('department_officer')
-            && $user->department_id
+        return $user->hasRole('branch_head', 'branch_staff')
+            && $user->branch_id
             && $document->application
-            && (int) $document->application->department_id === (int) $user->department_id;
+            && (int) $document->application->branch_id === (int) $user->branch_id;
     }
 
     public function delete(User $user, ApplicationDocument $document): bool

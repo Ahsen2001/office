@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
-use App\Models\Department;
+use App\Models\Branch;
 use App\Models\Person;
 use App\Models\ServiceApplication;
 use App\Models\User;
@@ -18,12 +18,13 @@ class AppointmentController extends Controller
 {
     public function index(Request $request): View
     {
-        $departmentId = $request->integer('department_id') ?: null;
+        $departmentId = $request->integer('branch_id') ?: null;
         $status = $request->string('status')->toString();
         $date = $request->date('date')?->format('Y-m-d');
 
-        $appointments = Appointment::with(['person', 'application', 'department', 'officer'])
-            ->when($departmentId, fn ($query) => $query->where('department_id', $departmentId))
+        $appointments = Appointment::with(['person', 'application', 'branch', 'officer'])
+            ->when($request->user()->isBranchRestricted(), fn ($query) => $query->where('branch_id', $request->user()->branch_id))
+            ->when($departmentId, fn ($query) => $query->where('branch_id', $departmentId))
             ->when($status, fn ($query) => $query->where('status', $status))
             ->when($date, fn ($query) => $query->whereDate('appointment_date', $date))
             ->orderBy('appointment_date')
@@ -33,7 +34,7 @@ class AppointmentController extends Controller
 
         return view('staff.appointments.index', [
             'appointments' => $appointments,
-            'departments' => Department::orderBy('name')->get(),
+            'departments' => Branch::visibleTo($request->user())->orderBy('name')->get(),
             'departmentId' => $departmentId,
             'status' => $status,
             'date' => $date,
@@ -47,7 +48,8 @@ class AppointmentController extends Controller
         $start = $month->copy()->startOfMonth();
         $end = $month->copy()->endOfMonth();
 
-        $appointments = Appointment::with(['person', 'department', 'officer'])
+        $appointments = Appointment::with(['person', 'branch', 'officer'])
+            ->when($request->user()->isBranchRestricted(), fn ($query) => $query->where('branch_id', $request->user()->branch_id))
             ->whereBetween('appointment_date', [$start, $end])
             ->orderBy('appointment_date')
             ->orderBy('start_time')
@@ -80,6 +82,7 @@ class AppointmentController extends Controller
             'application_id' => $application?->id,
             'person_id' => $application?->person_id ?? $data['person_id'],
             'department_id' => $application?->department_id ?? $data['department_id'],
+            'branch_id' => $application?->branch_id ?? $data['department_id'],
             'officer_id' => $data['officer_id'] ?? null,
             'created_by' => $request->user()->id,
             'appointment_date' => $data['appointment_date'],
@@ -113,6 +116,7 @@ class AppointmentController extends Controller
             'application_id' => $application->id,
             'person_id' => $application->person_id,
             'department_id' => $application->department_id,
+            'branch_id' => $application->branch_id,
             'officer_id' => $data['officer_id'] ?? null,
             'created_by' => $request->user()->id,
             'appointment_date' => $data['appointment_date'],
@@ -138,7 +142,7 @@ class AppointmentController extends Controller
     public function show(Appointment $appointment): View
     {
         return view('staff.appointments.show', [
-            'appointment' => $appointment->load(['person', 'application.service', 'department', 'officer', 'creator']),
+            'appointment' => $appointment->load(['person', 'application.service', 'branch', 'officer', 'creator']),
         ]);
     }
 
@@ -200,7 +204,7 @@ class AppointmentController extends Controller
         return $request->validate([
             'person_id' => ['required_without:application_id', 'nullable', 'exists:people,id'],
             'application_id' => ['nullable', 'exists:service_applications,id'],
-            'department_id' => ['required_without:application_id', 'nullable', 'exists:departments,id'],
+            'department_id' => ['required_without:application_id', 'nullable', 'exists:branches,id'],
             'officer_id' => ['nullable', 'exists:users,id'],
             'appointment_date' => ['required', 'date'],
             'start_time' => ['required', 'date_format:H:i'],
@@ -219,8 +223,8 @@ class AppointmentController extends Controller
             'person' => $person,
             'people' => Person::orderBy('full_name')->limit(200)->get(),
             'applications' => ServiceApplication::with('person')->latest()->limit(200)->get(),
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
-            'officers' => User::where('is_active', true)->whereHas('roles', fn ($query) => $query->where('slug', 'department_officer'))->orderBy('name')->get(),
+            'departments' => Branch::visibleTo(auth()->user())->where('is_active', true)->orderBy('name')->get(),
+            'officers' => User::where('is_active', true)->whereHas('roles', fn ($query) => $query->whereIn('slug', ['branch_head', 'branch_staff']))->orderBy('name')->get(),
         ];
     }
 

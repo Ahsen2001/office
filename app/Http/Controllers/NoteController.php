@@ -92,10 +92,10 @@ class NoteController extends Controller
 
     private function authorizeDepartmentOfficer(Request $request, ServiceApplication $application): void
     {
-        if (! $request->user()?->hasRole('department_officer')) {
+        if (! $request->user()?->hasRole('branch_head', 'branch_staff')) {
             return;
         }
 
-        abort_unless((int) $request->user()->department_id === (int) $application->department_id, 403);
+        abort_unless((int) $request->user()->branch_id === (int) $application->branch_id, 403);
     }
 }

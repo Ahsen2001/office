@@ -15,7 +15,7 @@ Use this table for manual QA, UAT, and as a blueprint for Laravel feature tests.
 | QR-001 | QR code generation | Register a new person | QR code and barcode values/files are created |  | Pending |
 | QR-002 | QR scan redirect | Open scanner, scan valid person QR | Browser redirects to person profile |  | Pending |
 | QR-003 | Invalid QR scan | Scan random/unknown QR value | Error message is shown, no private data is exposed |  | Pending |
-| PROFILE-001 | Person profile view | Open a person profile as Staff | Photo, person ID, QR, applications, payments, documents, notes, appointments, and timeline are shown |  | Pending |
+| PROFILE-001 | Person profile view | Open a person profile as Staff | Photo, person ID, QR, applications, documents, notes, appointments, and timeline are shown |  | Pending |
 | APP-001 | Application creation | Create application for registered person with service, department, officer, status | Application number is generated and details page opens |  | Pending |
 | APP-002 | Application status update | Update application status with remarks | Application status changes and history timeline entry is created |  | Pending |
 | APP-003 | Application search/filter | Filter applications by status, department, and search text | Result list matches filters and pagination keeps query string |  | Pending |
@@ -24,8 +24,6 @@ Use this table for manual QA, UAT, and as a blueprint for Laravel feature tests.
 | DOC-001 | Document upload | Upload PDF/JPG/PNG/DOC/DOCX under allowed size | Document is saved and visible on profile/application |  | Pending |
 | DOC-002 | Invalid document upload | Upload disallowed file type or oversized file | Validation error is shown and file is not stored |  | Pending |
 | DOC-003 | Secure document download | Try document download as unauthorized role/user | Request is denied with 403 |  | Pending |
-| PAY-001 | Payment entry | Add payment to application with method/status/amount | Receipt number is generated and payment appears in history |  | Pending |
-| PAY-002 | Payment receipt PDF | Open payment PDF export | PDF downloads with correct receipt data |  | Pending |
 | APPT-001 | Appointment booking | Book appointment for person/application | Appointment is saved and appears in calendar/profile/dashboard |  | Pending |
 | APPT-002 | Appointment reschedule/cancel | Edit appointment date/time, then cancel | Status and new schedule are saved correctly |  | Pending |
 | NOTIF-001 | Notification creation | Create/assign/update application | Assigned officer and managers receive notification where applicable |  | Pending |
@@ -39,7 +37,7 @@ Use this table for manual QA, UAT, and as a blueprint for Laravel feature tests.
 | SEC-001 | CSRF protection | Submit protected POST without CSRF token | Request is rejected |  | Pending |
 | SEC-002 | XSS protection | Enter `<script>alert(1)</script>` in searchable text field | Script is displayed as text or sanitized; it does not execute |  | Pending |
 | SEC-003 | SQL injection resistance | Search with `' OR 1=1 --` | Query executes safely and does not expose unrelated records |  | Pending |
-| SEC-004 | Audit logs | Perform login, create person, upload document, update status, add payment | Audit log entries contain user, action, module, IP, user agent, and timestamp |  | Pending |
+| SEC-004 | Audit logs | Perform login, create person, upload document, and update status | Audit log entries contain user, action, module, IP, user agent, and timestamp |  | Pending |
 | SEC-005 | Backup command | Run `php artisan office:backup` | Timestamped SQL backup is created in `storage/app/backups` |  | Pending |
 
 ## Manual Testing Table Template
@@ -60,5 +58,5 @@ Use this table for manual QA, UAT, and as a blueprint for Laravel feature tests.
 - Confirm private documents are streamed through controllers, not direct public links.
 - Confirm login throttle works after repeated failed attempts.
 - Confirm session cookie settings are production-ready: encrypted, HTTP-only, SameSite, and secure over HTTPS.
-- Confirm audit logs are written for authentication, people, applications, documents, payments, appointments, users, departments, services, and settings.
+- Confirm audit logs are written for authentication, people, applications, documents, appointments, users, departments, services, and settings.
 - Confirm backups are stored outside the public web root and protected by server permissions.

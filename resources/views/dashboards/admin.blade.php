@@ -12,7 +12,7 @@
                 ['label' => 'Pending', 'value' => $pendingApplications, 'icon' => 'fa-hourglass-half'],
                 ['label' => 'Completed', 'value' => $completedApplications, 'icon' => 'fa-circle-check'],
                 ['label' => 'Rejected', 'value' => $rejectedApplications, 'icon' => 'fa-circle-xmark'],
-                ['label' => 'Departments', 'value' => $departments, 'icon' => 'fa-building'],
+                ['label' => 'Branches', 'value' => $departments, 'icon' => 'fa-building'],
                 ['label' => 'Services', 'value' => $services, 'icon' => 'fa-briefcase'],
                 ['label' => 'Staff', 'value' => $staff, 'icon' => 'fa-users'],
                 ['label' => 'Today Applications', 'value' => $todayApplications, 'icon' => 'fa-calendar-day'],
@@ -47,11 +47,16 @@
         <div class="col-xl-5">
             <div class="card soft-card h-100">
                 <div class="card-body">
-                    <h2 class="h5 mb-3">Department-wise Applications</h2>
+                    <h2 class="h5 mb-3">Branch-wise Applications</h2>
                     <canvas id="departmentApplicationsChart" height="120"></canvas>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-xl-8"><div class="card soft-card h-100"><div class="card-body"><h2 class="h5 mb-3">Recent System Activities</h2>@forelse($recentActivities as $activity)<div class="border-bottom py-2"><div class="fw-semibold">{{ $activity->description }}</div><div class="small text-muted">{{ $activity->user?->name ?? 'System' }} · {{ $activity->created_at?->diffForHumans() }}</div></div>@empty<div class="text-muted">No activity recorded.</div>@endforelse</div></div></div>
+        <div class="col-xl-4"><div class="card soft-card h-100"><div class="card-body"><h2 class="h5 mb-3">Audit Log Summary</h2>@forelse($auditSummary as $action => $total)<div class="d-flex justify-content-between border-bottom py-2"><span>{{ ucwords(str_replace('_',' ',$action)) }}</span><span class="badge text-bg-secondary">{{ $total }}</span></div>@empty<div class="text-muted">No audit entries.</div>@endforelse</div></div></div>
     </div>
 
     <div class="row g-4">

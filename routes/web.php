@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\BranchController as AdminBranchController;
 use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DepartmentController as AdminDepartmentController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\RoleDashboardController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\DepartmentOfficer\DashboardController as OfficerDashboardController;
 use App\Http\Controllers\DepartmentOfficer\ApplicationProcessingController;
@@ -22,7 +24,6 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\AppointmentController;
 use App\Http\Controllers\Staff\DocumentController;
-use App\Http\Controllers\Staff\PaymentController;
 use App\Http\Controllers\Staff\PersonController;
 use App\Http\Controllers\Staff\QrBarcodeController;
 use App\Http\Controllers\Staff\ServiceApplicationController;
@@ -61,10 +62,13 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::resource('users', AdminUserController::class)->except(['show']);
     Route::patch('/users/{user}/activate', [AdminUserController::class, 'activate'])->name('users.activate');
     Route::patch('/users/{user}/deactivate', [AdminUserController::class, 'deactivate'])->name('users.deactivate');
-    Route::resource('departments', AdminDepartmentController::class)->except(['show']);
-    Route::patch('/departments/{department}/activate', [AdminDepartmentController::class, 'activate'])->name('departments.activate');
-    Route::patch('/departments/{department}/deactivate', [AdminDepartmentController::class, 'deactivate'])->name('departments.deactivate');
-    Route::resource('services', AdminServiceController::class)->except(['show']);
+    Route::get('/branches', [AdminBranchController::class, 'index'])->name('branches.index');
+    Route::get('/branches/{branch}', [AdminBranchController::class, 'show'])->name('branches.show');
+    Route::resource('branches', AdminBranchController::class)->except(['index', 'show']);
+    Route::patch('/branches/{branch}/activate', [AdminBranchController::class, 'activate'])->name('branches.activate');
+    Route::patch('/branches/{branch}/deactivate', [AdminBranchController::class, 'deactivate'])->name('branches.deactivate');
+    Route::get('/services', [AdminServiceController::class, 'index'])->name('services.index');
+    Route::resource('services', AdminServiceController::class)->except(['index', 'show']);
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
     Route::put('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
     Route::get('/contact-messages', [AdminContactMessageController::class, 'index'])->name('contact-messages.index');
@@ -76,8 +80,33 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::patch('/people/{person}/codes/regenerate', [QrBarcodeController::class, 'regenerate'])->name('people.codes.regenerate');
 });
 
-Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name('staff.')->group(function () {
-    Route::get('/dashboard', StaffDashboardController::class)->name('dashboard');
+Route::middleware(['auth', 'active', 'role:admin,management,reception,branch_head,branch_staff'])->group(function () {
+    Route::get('/branches', [AdminBranchController::class, 'index'])->name('branches.index');
+    Route::get('/branches/{branch}', [AdminBranchController::class, 'show'])->middleware('branch.access')->name('branches.show');
+    Route::get('/office/services', [AdminServiceController::class, 'index'])->middleware('branch.access')->name('office.services.index');
+});
+
+Route::middleware(['auth', 'active', 'management'])->prefix('management')->name('management.')->group(function () {
+    Route::get('/dashboard', [RoleDashboardController::class, 'management'])->name('dashboard');
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export/{report}/{format}', [ReportController::class, 'export'])->name('reports.export');
+    Route::get('/applications', [ServiceApplicationController::class, 'index'])->name('applications.index');
+    Route::get('/applications/{application}', [ServiceApplicationController::class, 'show'])->name('applications.show');
+});
+
+Route::middleware(['auth', 'active', 'reception'])->prefix('reception')->name('reception.')->group(function () {
+    Route::get('/dashboard', [RoleDashboardController::class, 'reception'])->name('dashboard');
+});
+
+Route::middleware(['auth', 'active', 'branch.head'])->prefix('branch-head')->name('branch-head.')->group(function () {
+    Route::get('/dashboard', [RoleDashboardController::class, 'branchHead'])->name('dashboard');
+});
+
+Route::middleware(['auth', 'active', 'branch.staff'])->prefix('branch-staff')->name('branch-staff.')->group(function () {
+    Route::get('/dashboard', [RoleDashboardController::class, 'branchStaff'])->name('dashboard');
+});
+
+Route::middleware(['auth', 'active', 'role:admin,reception,branch_head,branch_staff', 'branch.access'])->prefix('staff')->name('staff.')->group(function () {
     Route::get('/people', [PersonController::class, 'index'])->name('people.index');
     Route::get('/people/create', [PersonController::class, 'create'])->name('people.create');
     Route::post('/people', [PersonController::class, 'store'])->name('people.store');
@@ -101,11 +130,11 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
     Route::get('/applications/{application}/edit', [ServiceApplicationController::class, 'edit'])->name('applications.edit');
     Route::put('/applications/{application}', [ServiceApplicationController::class, 'update'])->name('applications.update');
     Route::patch('/applications/{application}/status', [ServiceApplicationController::class, 'updateStatus'])->name('applications.status');
+    Route::patch('/applications/{application}/assign', [ServiceApplicationController::class, 'assign'])->name('applications.assign');
     Route::get('/applications/{application}/receipt', [ServiceApplicationController::class, 'receipt'])->name('applications.receipt');
     Route::get('/applications/{application}', [ServiceApplicationController::class, 'show'])->name('applications.show');
 
     Route::post('/applications/{application}/documents', [DocumentController::class, 'store'])->name('documents.store');
-    Route::post('/applications/{application}/payments', [PaymentController::class, 'store'])->name('payments.store');
     Route::post('/applications/{application}/appointments', [AppointmentController::class, 'storeForApplication'])->name('appointments.store');
     Route::post('/applications/{application}/notes', [NoteController::class, 'storeForApplication'])->name('applications.notes.store');
 
@@ -113,12 +142,6 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
     Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
-
-    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
-    Route::get('/payments/report/pdf', [PaymentController::class, 'reportPdf'])->name('payments.report.pdf');
-    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
-    Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
-    Route::get('/payments/{payment}/receipt/pdf', [PaymentController::class, 'receiptPdf'])->name('payments.receipt.pdf');
 
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/appointments/calendar', [AppointmentController::class, 'calendar'])->name('appointments.calendar');
@@ -135,23 +158,6 @@ Route::middleware(['auth', 'active', 'role:admin,staff'])->prefix('staff')->name
     Route::get('/notes/{note}/edit', [NoteController::class, 'edit'])->name('notes.edit');
     Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update');
     Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
-});
-
-Route::middleware(['auth', 'active', 'role:admin,department_officer'])->prefix('officer')->name('officer.')->group(function () {
-    Route::get('/dashboard', OfficerDashboardController::class)->name('dashboard');
-    Route::get('/applications', [ApplicationProcessingController::class, 'index'])->name('applications.index');
-    Route::get('/applications/{application}', [ApplicationProcessingController::class, 'show'])->name('applications.show');
-    Route::patch('/applications/{application}/status', [ApplicationProcessingController::class, 'updateStatus'])->name('applications.status');
-    Route::post('/applications/{application}/notes', [NoteController::class, 'storeForApplication'])->name('applications.notes.store');
-});
-
-Route::middleware(['auth', 'active', 'role:admin,manager'])->prefix('manager')->name('manager.')->group(function () {
-    Route::get('/dashboard', ManagerDashboardController::class)->name('dashboard');
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/dashboard', [ReportController::class, 'index'])->name('reports.dashboard');
-    Route::get('/reports/export/{report}/{format}', [ReportController::class, 'export'])->name('reports.export');
-    Route::get('/exports/applications.pdf', [ExportController::class, 'applicationsPdf'])->name('exports.applications.pdf');
-    Route::get('/exports/applications.xlsx', [ExportController::class, 'applicationsExcel'])->name('exports.applications.excel');
 });
 
 require __DIR__.'/auth.php';

@@ -48,7 +48,25 @@
         <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-right-to-bracket me-1"></i> Login</button>
     </form>
 
-    <p class="text-muted small text-center mt-4 mb-0">Access is limited to authorized administrators, staff, department officers, and managers.</p>
+    <p class="text-muted small text-center mt-4 mb-0">Access is limited to authorized administrators, management officers, reception staff, branch heads, and branch staff.</p>
+
+    @if(app()->environment('local'))
+        <div class="alert alert-light border mt-4 mb-0 small">
+            <div class="fw-semibold mb-2"><i class="fa-solid fa-flask me-1"></i> Development login credentials</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-1 align-middle">
+                    <tbody>
+                        <tr><th>Admin</th><td>admin@office.test</td></tr>
+                        <tr><th>Reception Staff</th><td>staff@office.test</td></tr>
+                        <tr><th>Branch Head</th><td>branchhead@office.test</td></tr>
+                        <tr><th>Branch Staff</th><td>officer@office.test</td></tr>
+                        <tr><th>DS / ADS / AO</th><td>manager@office.test</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-muted">Password for development accounts: <code>password</code></div>
+        </div>
+    @endif
 
     <script>
         document.querySelector('[data-password-toggle]')?.addEventListener('click', (event) => {

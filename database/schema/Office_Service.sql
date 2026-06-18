@@ -108,10 +108,8 @@ CREATE TABLE `services` (
   `code` VARCHAR(40) NOT NULL,
   `name` VARCHAR(180) NOT NULL,
   `description` TEXT NULL,
-  `fee_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `estimated_days` SMALLINT UNSIGNED NULL,
   `requires_appointment` TINYINT(1) NOT NULL DEFAULT 0,
-  `requires_payment` TINYINT(1) NOT NULL DEFAULT 0,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP NULL DEFAULT NULL,
   `updated_at` TIMESTAMP NULL DEFAULT NULL,
@@ -147,7 +145,6 @@ CREATE TABLE `service_applications` (
   `priority` ENUM('low','normal','high','urgent') NOT NULL DEFAULT 'normal',
   `subject` TEXT NULL,
   `description` LONGTEXT NULL,
-  `total_fee` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `due_date` DATE NULL,
   `submitted_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `approved_at` TIMESTAMP NULL DEFAULT NULL,
@@ -237,43 +234,6 @@ CREATE TABLE `application_documents` (
   CONSTRAINT `application_documents_document_type_id_foreign` FOREIGN KEY (`document_type_id`) REFERENCES `document_types` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `application_documents_uploaded_by_foreign` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `application_documents_verified_by_foreign` FOREIGN KEY (`verified_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `payment_methods` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `code` VARCHAR(50) NOT NULL,
-  `name` VARCHAR(100) NOT NULL,
-  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
-  `created_at` TIMESTAMP NULL DEFAULT NULL,
-  `updated_at` TIMESTAMP NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `payment_methods_code_unique` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `payments` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `receipt_no` VARCHAR(50) NOT NULL,
-  `application_id` BIGINT UNSIGNED NOT NULL,
-  `person_id` BIGINT UNSIGNED NOT NULL,
-  `payment_method_id` BIGINT UNSIGNED NOT NULL,
-  `received_by` BIGINT UNSIGNED NULL,
-  `amount` DECIMAL(12,2) NOT NULL,
-  `status` ENUM('pending','paid','failed','refunded','cancelled') NOT NULL DEFAULT 'pending',
-  `transaction_reference` VARCHAR(120) NULL,
-  `remarks` TEXT NULL,
-  `paid_at` TIMESTAMP NULL DEFAULT NULL,
-  `created_at` TIMESTAMP NULL DEFAULT NULL,
-  `updated_at` TIMESTAMP NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `payments_receipt_no_unique` (`receipt_no`),
-  KEY `payments_application_id_status_index` (`application_id`, `status`),
-  KEY `payments_person_id_paid_at_index` (`person_id`, `paid_at`),
-  KEY `payments_payment_method_id_foreign` (`payment_method_id`),
-  KEY `payments_received_by_foreign` (`received_by`),
-  CONSTRAINT `payments_application_id_foreign` FOREIGN KEY (`application_id`) REFERENCES `service_applications` (`id`) ON DELETE RESTRICT,
-  CONSTRAINT `payments_person_id_foreign` FOREIGN KEY (`person_id`) REFERENCES `people` (`id`) ON DELETE RESTRICT,
-  CONSTRAINT `payments_payment_method_id_foreign` FOREIGN KEY (`payment_method_id`) REFERENCES `payment_methods` (`id`) ON DELETE RESTRICT,
-  CONSTRAINT `payments_received_by_foreign` FOREIGN KEY (`received_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `appointments` (
@@ -381,4 +341,3 @@ CREATE TABLE `system_settings` (
   UNIQUE KEY `system_settings_key_unique` (`key`),
   KEY `system_settings_group_index` (`group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-

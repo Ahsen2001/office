@@ -16,11 +16,11 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('staff.people.index') }}">People</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('staff.applications.index') }}">Applications</a></li>
                     @endif
-                    @if(auth()->user()->hasRole('admin', 'department_officer'))
+                    @if(auth()->user()->hasRole('admin', 'branch_head', 'branch_staff'))
                         <li class="nav-item"><a class="nav-link" href="{{ route('officer.applications.index') }}">Officer Queue</a></li>
                     @endif
                     @if(auth()->user()->hasRole('admin', 'manager'))
-                        <li class="nav-item"><a class="nav-link" href="{{ route('manager.dashboard') }}">Reports</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('management.dashboard') }}">Reports</a></li>
                     @endif
                 </ul>
 

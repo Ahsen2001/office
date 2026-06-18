@@ -47,20 +47,16 @@
         <div class="summary-box">Rejected<strong>{{ $rejectedApplications }}</strong></div>
     </div>
 
-    <h2>Payment Summary</h2>
-    <table>
-        <tr><th>Paid Total</th><td>{{ number_format($paidTotal, 2) }}</td><th>Pending Total</th><td>{{ number_format($pendingPaymentTotal, 2) }}</td></tr>
-    </table>
 
     <h2>Applications</h2>
     <table>
-        <thead><tr><th>No</th><th>Service</th><th>Department</th><th>Status</th><th>Submitted</th></tr></thead>
+        <thead><tr><th>No</th><th>Service</th><th>Branch</th><th>Status</th><th>Submitted</th></tr></thead>
         <tbody>
             @forelse($person->applications as $application)
                 <tr>
                     <td>{{ $application->application_no }}</td>
                     <td>{{ $application->service?->name }}</td>
-                    <td>{{ $application->department?->name }}</td>
+                    <td>{{ $application->branch?->name }}</td>
                     <td>{{ $application->status?->name }}</td>
                     <td>{{ $application->submitted_at?->format('Y-m-d') }}</td>
                 </tr>

@@ -31,7 +31,7 @@ class NotificationService
     public function managers(string $title, string $message, string $type = 'system', ?ServiceApplication $application = null): Collection
     {
         return User::where('is_active', true)
-            ->whereHas('roles', fn ($query) => $query->where('slug', 'manager'))
+            ->whereHas('roles', fn ($query) => $query->where('slug', 'management'))
             ->get()
             ->map(fn (User $user) => $this->forUser($user, $title, $message, $type, $application))
             ->filter()

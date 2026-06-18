@@ -15,5 +15,6 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(OfficeServiceSeeder::class);
+        $this->call(BranchAndRoleSeeder::class);
     }
 }

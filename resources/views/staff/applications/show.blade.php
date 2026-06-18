@@ -13,7 +13,7 @@
             <div class="row g-3">
                 <div class="col-md-6"><div class="text-muted small">Person</div><a href="{{ route('staff.people.show', $application->person) }}">{{ $application->person?->full_name }}</a></div>
                 <div class="col-md-6"><div class="text-muted small">Status</div><span class="badge text-bg-secondary">{{ $application->status?->name }}</span></div>
-                <div class="col-md-6"><div class="text-muted small">Department</div>{{ $application->department?->name }}</div>
+                <div class="col-md-6"><div class="text-muted small">Branch</div>{{ $application->branch?->name }}</div>
                 <div class="col-md-6"><div class="text-muted small">Assigned officer</div>{{ $application->assignedOfficer?->name ?? 'Unassigned' }}</div>
                 <div class="col-md-6"><div class="text-muted small">Deadline</div>{{ $application->due_date?->format('Y-m-d') }}</div>
                 <div class="col-md-6"><div class="text-muted small">Priority</div>{{ ucfirst($application->priority) }}</div>
@@ -112,65 +112,6 @@
             </div>
         </div></div>
 
-        <div class="card soft-card mb-4"><div class="card-body">
-            <h2 class="h5 mb-3">Payments</h2>
-            <form method="POST" action="{{ route('staff.payments.store', $application) }}" class="border rounded p-3 mb-3">
-                @csrf
-                <div class="row g-2">
-                    <div class="col-md-3">
-                        <label class="form-label small text-muted">Amount</label>
-                        <input type="number" step="0.01" min="0" name="amount" value="{{ old('amount', $application->total_fee) }}" class="form-control" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small text-muted">Method</label>
-                        <select name="payment_method_id" class="form-select" required>
-                            @foreach($paymentMethods as $method)
-                                <option value="{{ $method->id }}">{{ $method->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small text-muted">Status</label>
-                        <select name="status" class="form-select" required>
-                            <option value="paid">Paid</option>
-                            <option value="unpaid">Unpaid</option>
-                            <option value="partially_paid">Partially Paid</option>
-                            <option value="refunded">Refunded</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small text-muted">Payment Date</label>
-                        <input type="datetime-local" name="payment_date" class="form-control">
-                    </div>
-                    <div class="col-md-4"><input type="text" name="transaction_reference" class="form-control" placeholder="Transaction reference"></div>
-                    <div class="col-md-5"><input type="text" name="remarks" class="form-control" placeholder="Remarks"></div>
-                    <div class="col-md-3"><button class="btn btn-success w-100">Add Payment</button></div>
-                </div>
-            </form>
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead><tr><th>Receipt</th><th>Method</th><th>Status</th><th>Amount</th><th>Date</th><th class="text-end">Actions</th></tr></thead>
-                    <tbody>
-                        @forelse($application->payments as $payment)
-                            <tr>
-                                <td>{{ $payment->receipt_no }}</td>
-                                <td>{{ $payment->method?->name }}</td>
-                                <td><span class="badge text-bg-secondary">{{ ucwords(str_replace('_', ' ', $payment->status)) }}</span></td>
-                                <td>{{ number_format($payment->amount, 2) }}</td>
-                                <td>{{ $payment->payment_date?->format('Y-m-d H:i') ?? $payment->paid_at?->format('Y-m-d H:i') }}</td>
-                                <td class="text-end">
-                                    <a href="{{ route('staff.payments.receipt', $payment) }}" class="btn btn-sm btn-outline-success">Print Receipt</a>
-                                    <a href="{{ route('staff.payments.receipt.pdf', $payment) }}" class="btn btn-sm btn-outline-primary">PDF</a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="6" class="text-center text-muted">No payments recorded.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div></div>
-
         <div class="card soft-card"><div class="card-body">
             <h2 class="h5 mb-3">Timeline</h2>
             <div class="timeline">
@@ -185,6 +126,21 @@
         </div></div>
     </div>
     <div class="col-lg-4">
+        @if(auth()->user()->hasRole('admin', 'branch_head'))
+        <div class="card soft-card mb-4"><div class="card-body">
+            <h2 class="h5 mb-3">Assign Branch Staff</h2>
+            <form method="POST" action="{{ route('staff.applications.assign', $application) }}">
+                @csrf @method('PATCH')
+                <select name="assigned_officer_id" class="form-select mb-2" required>
+                    <option value="">Select staff member</option>
+                    @foreach($branchStaff as $staff)
+                        <option value="{{ $staff->id }}" @selected($application->assigned_officer_id === $staff->id)>{{ $staff->name }}</option>
+                    @endforeach
+                </select>
+                <button class="btn btn-outline-primary w-100">Assign Application</button>
+            </form>
+        </div></div>
+        @endif
         <div class="card soft-card mb-4"><div class="card-body">
             <h2 class="h5 mb-3">Update Status</h2>
             <form method="POST" action="{{ route('staff.applications.status', $application) }}">

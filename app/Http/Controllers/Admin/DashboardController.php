@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Department;
+use App\Models\AuditLog;
+use App\Models\Branch;
 use App\Models\Appointment;
 use App\Models\Person;
 use App\Models\Service;
@@ -23,29 +24,29 @@ class DashboardController extends Controller
             ->pluck('total', 'code');
 
         $monthlyApplications = ServiceApplication::query()
-            ->selectRaw("DATE_FORMAT(submitted_at, '%Y-%m') as month, count(*) as total")
             ->where('submitted_at', '>=', now()->subMonths(11)->startOfMonth())
-            ->groupBy('month')
-            ->orderBy('month')
-            ->pluck('total', 'month');
+            ->get(['submitted_at'])
+            ->groupBy(fn ($application) => $application->submitted_at?->format('Y-m'))
+            ->map->count()
+            ->sortKeys();
 
-        $departmentApplications = Department::query()
-            ->leftJoin('service_applications', 'departments.id', '=', 'service_applications.department_id')
-            ->select('departments.name', DB::raw('count(service_applications.id) as total'))
-            ->groupBy('departments.id', 'departments.name')
-            ->orderBy('departments.name')
-            ->pluck('total', 'departments.name');
+        $departmentApplications = Branch::query()
+            ->leftJoin('service_applications', 'branches.id', '=', 'service_applications.branch_id')
+            ->select('branches.name', DB::raw('count(service_applications.id) as total'))
+            ->groupBy('branches.id', 'branches.name')
+            ->orderBy('branches.name')
+            ->pluck('total', 'branches.name');
 
         return view('dashboards.admin', [
             'users' => User::count(),
-            'departments' => Department::count(),
+            'departments' => Branch::count(),
             'people' => Person::count(),
             'applications' => ServiceApplication::count(),
             'pendingApplications' => ($statusCounts['submitted'] ?? 0) + ($statusCounts['pending'] ?? 0) + ($statusCounts['under_review'] ?? 0) + ($statusCounts['processing'] ?? 0) + ($statusCounts['waiting_for_documents'] ?? 0),
             'completedApplications' => $statusCounts['completed'] ?? 0,
             'rejectedApplications' => $statusCounts['rejected'] ?? 0,
             'services' => Service::count(),
-            'staff' => User::whereHas('roles', fn ($query) => $query->where('slug', 'staff'))->count(),
+            'staff' => User::whereHas('roles', fn ($query) => $query->whereIn('slug', ['reception', 'branch_head', 'branch_staff']))->count(),
             'todayApplications' => ServiceApplication::whereDate('submitted_at', today())->count(),
             'todayAppointments' => Appointment::whereDate('appointment_date', today())->count(),
             'recentAppointments' => Appointment::with(['person', 'department', 'officer'])->whereDate('appointment_date', '>=', today())->orderBy('appointment_date')->orderBy('start_time')->limit(6)->get(),
@@ -58,6 +59,8 @@ class DashboardController extends Controller
                 ->latest()
                 ->limit(6)
                 ->get(),
+            'recentActivities' => AuditLog::with('user')->latest()->limit(8)->get(),
+            'auditSummary' => AuditLog::selectRaw('action, count(*) total')->groupBy('action')->orderByDesc('total')->limit(5)->pluck('total', 'action'),
         ]);
     }
 }
