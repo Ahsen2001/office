@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DepartmentController as AdminDepartmentController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\DepartmentOfficer\DashboardController as OfficerDashboardController;
 use App\Http\Controllers\DepartmentOfficer\ApplicationProcessingController;
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboardController;
@@ -15,6 +17,7 @@ use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicApplicationStatusController;
+use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\AppointmentController;
@@ -25,10 +28,18 @@ use App\Http\Controllers\Staff\QrBarcodeController;
 use App\Http\Controllers\Staff\ServiceApplicationController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+Route::name('public.')->group(function () {
+    Route::get('/', [PublicPageController::class, 'home'])->name('home');
+    Route::get('/about', [PublicPageController::class, 'about'])->name('about');
+    Route::get('/services', [PublicPageController::class, 'services'])->name('services');
+    Route::get('/contact', [PublicPageController::class, 'contact'])->name('contact');
+    Route::post('/contact', [ContactMessageController::class, 'store'])
+        ->middleware('throttle:5,1')
+        ->name('contact.store');
+    Route::get('/status-check', [PublicApplicationStatusController::class, 'index'])
+        ->middleware('throttle:30,1')
+        ->name('status');
 });
-Route::get('/status-check', [PublicApplicationStatusController::class, 'index'])->name('public.status');
 
 Route::get('/dashboard', DashboardRedirectController::class)->middleware(['auth', 'active'])->name('dashboard');
 
@@ -56,6 +67,9 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::resource('services', AdminServiceController::class)->except(['show']);
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
     Route::put('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
+    Route::get('/contact-messages', [AdminContactMessageController::class, 'index'])->name('contact-messages.index');
+    Route::get('/contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('contact-messages.show');
+    Route::patch('/contact-messages/{contactMessage}/status', [AdminContactMessageController::class, 'updateStatus'])->name('contact-messages.status');
     Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/audit-logs/export', [\App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
     Route::delete('/people/{person}', [PersonController::class, 'destroy'])->name('people.destroy');

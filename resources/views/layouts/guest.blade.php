@@ -39,9 +39,24 @@
         }
 
         .auth-visual {
-            background: linear-gradient(135deg, #1d4ed8, #059669);
+            background-image: url("{{ asset('images/public-office-hero.jpg') }}");
+            background-position: center;
+            background-size: cover;
             color: #fff;
             min-height: 560px;
+            position: relative;
+        }
+
+        .auth-visual::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 42, 82, .8);
+        }
+
+        .auth-visual > * {
+            position: relative;
+            z-index: 1;
         }
 
         .auth-mark {
@@ -95,8 +110,8 @@
         <div class="auth-panel row g-0">
             <section class="auth-visual col-lg-6 d-flex flex-column justify-content-between p-4 p-lg-5">
                 <div>
-                    <div class="auth-mark mb-4"><i class="fa-solid fa-qrcode fs-3"></i></div>
-                    <h1 class="display-6 fw-bold mb-3">{{ config('app.name', 'Office Service') }}</h1>
+                    <a href="{{ route('public.home') }}" class="auth-mark mb-4 text-white text-decoration-none" aria-label="Back to home"><i class="fa-solid fa-building-columns fs-3"></i></a>
+                    <h1 class="display-6 fw-bold mb-3">Office Service Management System</h1>
                     <p class="lead opacity-75 mb-0">Secure service intake, QR tracking, department processing, payments, appointments, and reports in one office workspace.</p>
                 </div>
                 <div class="row g-3 mt-5">

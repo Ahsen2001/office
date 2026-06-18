@@ -17,6 +17,8 @@ class SettingController extends Controller
             ['group' => 'general', 'key' => 'office_name', 'value' => config('app.name'), 'type' => 'string', 'description' => 'Name shown across reports and public pages.'],
             ['group' => 'general', 'key' => 'office_email', 'value' => '', 'type' => 'string', 'description' => 'Primary public contact email.'],
             ['group' => 'general', 'key' => 'office_phone', 'value' => '', 'type' => 'string', 'description' => 'Primary public contact number.'],
+            ['group' => 'general', 'key' => 'office_address', 'value' => '', 'type' => 'string', 'description' => 'Public office address shown on the contact page.'],
+            ['group' => 'general', 'key' => 'working_hours', 'value' => 'Monday to Friday, 8:30 AM - 4:30 PM', 'type' => 'string', 'description' => 'Public working hours shown on the website.'],
             ['group' => 'workflow', 'key' => 'default_processing_days', 'value' => '7', 'type' => 'integer', 'description' => 'Default service deadline in working days.'],
             ['group' => 'security', 'key' => 'public_status_enabled', 'value' => '1', 'type' => 'boolean', 'description' => 'Allow citizens to check limited application status publicly.'],
             ['group' => 'uploads', 'key' => 'max_upload_kb', 'value' => (string) config('office.uploads.max_kilobytes'), 'type' => 'integer', 'description' => 'Maximum document upload size in kilobytes.'],

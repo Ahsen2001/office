@@ -19,10 +19,16 @@ class PublicApplicationStatusController extends Controller
             $personCode = $this->normalizeQrValue(trim($request->string('person_code')->toString() ?: $request->string('qr')->toString()));
             $nic = trim($request->string('nic')->toString());
 
-            $applications = ServiceApplication::with(['person', 'service', 'department', 'status', 'documents.documentType', 'appointments'])
-                ->when($applicationNo, fn ($query) => $query->where('application_no', $applicationNo))
-                ->when($personCode, fn ($query) => $query->whereHas('person', fn ($personQuery) => $personQuery->where('person_code', $personCode)->orWhere('qr_code_value', $personCode)))
-                ->when($nic, fn ($query) => $query->whereHas('person', fn ($personQuery) => $personQuery->where('national_id', $nic)))
+            $applications = ServiceApplication::query()
+                ->with(['person', 'service', 'department', 'status', 'documents.documentType', 'appointments'])
+                ->when($applicationNo, fn ($query) => $query->where('application_no', '=', $applicationNo))
+                ->when($personCode, fn ($query) => $query->whereHas('person', fn ($personQuery) => $personQuery
+                    ->where('person_code', '=', $personCode)
+                    ->orWhere('qr_code_value', '=', $personCode)
+                    ->orWhere('barcode_value', '=', $personCode)))
+                ->when($nic, fn ($query) => $query->whereHas('person', fn ($personQuery) => $personQuery
+                    ->where('national_id', '=', $nic)
+                    ->orWhere('passport_no', '=', $nic)))
                 ->latest('submitted_at')
                 ->limit(10)
                 ->get();

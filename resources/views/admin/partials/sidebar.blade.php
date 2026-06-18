@@ -26,6 +26,7 @@
             $isAdmin ? ['label' => 'Users', 'icon' => 'fa-users-gear', 'route' => 'admin.users.index', 'active' => 'admin.users.*'] : null,
             $isAdmin ? ['label' => 'Departments', 'icon' => 'fa-building', 'route' => 'admin.departments.index', 'active' => 'admin.departments.*'] : null,
             $isAdmin ? ['label' => 'Services', 'icon' => 'fa-briefcase', 'route' => 'admin.services.index', 'active' => 'admin.services.*'] : null,
+            $isAdmin ? ['label' => 'Contact Messages', 'icon' => 'fa-envelope-open-text', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*'] : null,
             $isAdmin ? ['label' => 'Settings', 'icon' => 'fa-gear', 'route' => 'admin.settings.index', 'active' => 'admin.settings.*'] : null,
             $isAdmin ? ['label' => 'Audit Logs', 'icon' => 'fa-shield-halved', 'route' => 'admin.audit-logs.index', 'active' => 'admin.audit-logs.*'] : null,
             ($isAdmin || $isManager) ? ['label' => 'Reports', 'icon' => 'fa-chart-line', 'route' => 'manager.reports.index', 'active' => 'manager.reports.*'] : null,
