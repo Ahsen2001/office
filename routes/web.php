@@ -1,27 +1,22 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BranchController as AdminBranchController;
 use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
-use App\Http\Controllers\Admin\DepartmentController as AdminDepartmentController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\DashboardRedirectController;
-use App\Http\Controllers\RoleDashboardController;
 use App\Http\Controllers\ContactMessageController;
-use App\Http\Controllers\DepartmentOfficer\DashboardController as OfficerDashboardController;
-use App\Http\Controllers\DepartmentOfficer\ApplicationProcessingController;
-use App\Http\Controllers\Manager\DashboardController as ManagerDashboardController;
-use App\Http\Controllers\Manager\ExportController;
+use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\Manager\ReportController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicApplicationStatusController;
 use App\Http\Controllers\PublicPageController;
+use App\Http\Controllers\RoleDashboardController;
 use App\Http\Controllers\SearchController;
-use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\AppointmentController;
 use App\Http\Controllers\Staff\DocumentController;
 use App\Http\Controllers\Staff\PersonController;
@@ -74,8 +69,8 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::get('/contact-messages', [AdminContactMessageController::class, 'index'])->name('contact-messages.index');
     Route::get('/contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('contact-messages.show');
     Route::patch('/contact-messages/{contactMessage}/status', [AdminContactMessageController::class, 'updateStatus'])->name('contact-messages.status');
-    Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
-    Route::get('/audit-logs/export', [\App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('/audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
     Route::delete('/people/{person}', [PersonController::class, 'destroy'])->name('people.destroy');
     Route::patch('/people/{person}/codes/regenerate', [QrBarcodeController::class, 'regenerate'])->name('people.codes.regenerate');
 });
@@ -91,7 +86,10 @@ Route::middleware(['auth', 'active', 'management'])->prefix('management')->name(
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export/{report}/{format}', [ReportController::class, 'export'])->name('reports.export');
     Route::get('/applications', [ServiceApplicationController::class, 'index'])->name('applications.index');
+    Route::get('/applications/{application}/receipt', [ServiceApplicationController::class, 'receipt'])->name('applications.receipt');
     Route::get('/applications/{application}', [ServiceApplicationController::class, 'show'])->name('applications.show');
+    Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
+    Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
 });
 
 Route::middleware(['auth', 'active', 'reception'])->prefix('reception')->name('reception.')->group(function () {
@@ -115,7 +113,9 @@ Route::middleware(['auth', 'active', 'role:admin,reception,branch_head,branch_st
     Route::get('/people/{person}/card', [PersonController::class, 'card'])->name('people.card');
     Route::get('/people/{person}/report', [PersonController::class, 'report'])->name('people.report');
     Route::get('/people/{person}/qr/download', [QrBarcodeController::class, 'downloadQr'])->name('people.qr.download');
+    Route::get('/people/{person}/qr', [QrBarcodeController::class, 'viewQr'])->name('people.qr.view');
     Route::get('/people/{person}/barcode/download', [QrBarcodeController::class, 'downloadBarcode'])->name('people.barcode.download');
+    Route::get('/people/{person}/barcode', [QrBarcodeController::class, 'viewBarcode'])->name('people.barcode.view');
     Route::post('/people/{person}/documents', [DocumentController::class, 'storeForPerson'])->name('people.documents.store');
     Route::post('/people/{person}/notes', [NoteController::class, 'storeForPerson'])->name('people.notes.store');
     Route::get('/people/{person}', [PersonController::class, 'show'])->name('people.show');

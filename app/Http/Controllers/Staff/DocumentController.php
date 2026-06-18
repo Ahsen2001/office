@@ -7,13 +7,12 @@ use App\Models\ApplicationDocument;
 use App\Models\DocumentType;
 use App\Models\Person;
 use App\Models\ServiceApplication;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use App\Support\AuditLogger;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
@@ -22,14 +21,18 @@ class DocumentController extends Controller
         $search = $request->string('search')->toString();
 
         $documents = ApplicationDocument::with(['person', 'application', 'documentType', 'uploader'])
+            ->when($request->user()->isBranchRestricted(), fn ($query) => $query->where('branch_id', $request->user()->branch_id))
+            ->when($request->user()->hasRole('reception'), fn ($query) => $query->where('visibility', '!=', 'branch'))
             ->when($search, function ($query) use ($search) {
-                $query->where('document_title', 'like', "%{$search}%")
-                    ->orWhere('file_name', 'like', "%{$search}%")
-                    ->orWhereHas('person', fn ($personQuery) => $personQuery
-                        ->where('full_name', 'like', "%{$search}%")
-                        ->orWhere('person_code', 'like', "%{$search}%"))
-                    ->orWhereHas('application', fn ($applicationQuery) => $applicationQuery
-                        ->where('application_no', 'like', "%{$search}%"));
+                $query->where(function ($query) use ($search) {
+                    $query->where('document_title', 'like', "%{$search}%")
+                        ->orWhere('file_name', 'like', "%{$search}%")
+                        ->orWhereHas('person', fn ($personQuery) => $personQuery
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('person_code', 'like', "%{$search}%"))
+                        ->orWhereHas('application', fn ($applicationQuery) => $applicationQuery
+                            ->where('application_no', 'like', "%{$search}%"));
+                });
             })
             ->latest()
             ->paginate(12)
@@ -118,6 +121,7 @@ class DocumentController extends Controller
             'document_type_id' => ['required', 'exists:document_types,id'],
             'document_title' => ['nullable', 'string', 'max:180'],
             'remarks' => ['nullable', 'string'],
+            'visibility' => ['required', 'in:internal,branch,public'],
             'document' => [
                 'required',
                 'file',
@@ -145,6 +149,7 @@ class DocumentController extends Controller
         return ApplicationDocument::create([
             'application_id' => $application?->id,
             'person_id' => $person->id,
+            'branch_id' => $application?->branch_id ?: $request->user()?->branch_id,
             'document_type_id' => $data['document_type_id'],
             'document_title' => $data['document_title'] ?: $documentType?->name,
             'uploaded_by' => $request->user()?->id,
@@ -154,6 +159,7 @@ class DocumentController extends Controller
             'mime_type' => $file->getMimeType(),
             'file_size' => $file->getSize(),
             'remarks' => $data['remarks'] ?? null,
+            'visibility' => $data['visibility'],
         ]);
     }
 

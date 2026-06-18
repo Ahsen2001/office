@@ -12,6 +12,7 @@ class ApplicationDocument extends Model
     protected $fillable = [
         'application_id',
         'person_id',
+        'branch_id',
         'document_type_id',
         'document_title',
         'uploaded_by',
@@ -23,6 +24,7 @@ class ApplicationDocument extends Model
         'file_size',
         'status',
         'remarks',
+        'visibility',
         'verification_remarks',
         'verified_at',
     ];
@@ -40,6 +42,11 @@ class ApplicationDocument extends Model
     public function person()
     {
         return $this->belongsTo(Person::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function documentType()

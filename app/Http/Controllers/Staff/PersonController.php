@@ -42,6 +42,7 @@ class PersonController extends Controller
     public function create(): View
     {
         abort_unless(auth()->user()?->hasRole('admin', 'reception'), 403);
+
         return view('staff.people.create', [
             'person' => new Person(['country' => 'Sri Lanka', 'gender' => 'not_specified']),
         ]);
@@ -74,15 +75,18 @@ class PersonController extends Controller
         return redirect()->route('staff.people.show', $person)->with('success', 'Person registered successfully.');
     }
 
-    public function show(Person $person): View
+    public function show(Person $person, CodeGeneratorService $codes): View
     {
         $this->authorizePerson($person);
+        $this->ensureCodes($person, $codes);
+
         return view('staff.people.show', $this->profileData($person));
     }
 
     public function edit(Person $person): View
     {
         abort_unless(auth()->user()?->hasRole('admin', 'reception'), 403);
+
         return view('staff.people.edit', compact('person'));
     }
 
@@ -120,6 +124,7 @@ class PersonController extends Controller
     public function card(Person $person): View
     {
         $this->authorizePerson($person);
+
         return view('staff.people.card', compact('person'));
     }
 
@@ -212,5 +217,31 @@ class PersonController extends Controller
         }
 
         abort_unless($person->applications()->where('branch_id', $user->branch_id)->exists(), 403);
+    }
+
+    private function ensureCodes(Person $person, CodeGeneratorService $codes): void
+    {
+        $updates = [];
+
+        if (! $person->qr_code_value) {
+            $updates['qr_code_value'] = $person->person_code;
+        }
+
+        if (! $person->barcode_value) {
+            $updates['barcode_value'] = str_replace('-', '', $person->person_code);
+        }
+
+        if ($updates) {
+            $person->update($updates);
+            $person->refresh();
+        }
+
+        $qrMissing = ! $person->qr_code_path || ! Storage::disk('public')->exists($person->qr_code_path);
+        $barcodeMissing = ! $person->barcode_path || ! Storage::disk('public')->exists($person->barcode_path);
+
+        if ($qrMissing || $barcodeMissing) {
+            $person->update($codes->generateForPerson($person));
+            $person->refresh();
+        }
     }
 }

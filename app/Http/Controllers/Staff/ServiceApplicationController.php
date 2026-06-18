@@ -16,6 +16,7 @@ use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ServiceApplicationController extends Controller
@@ -24,12 +25,12 @@ class ServiceApplicationController extends Controller
     {
         $search = $request->string('search')->toString();
         $statusId = $request->integer('status_id') ?: null;
-        $departmentId = $request->integer('branch_id') ?: null;
+        $branchId = $request->integer('branch_id') ?: null;
 
         $applications = ServiceApplication::with(['person', 'service', 'branch', 'assignedOfficer', 'status'])
             ->visibleTo($request->user())
             ->when($statusId, fn ($query) => $query->where('status_id', $statusId))
-            ->when($departmentId, fn ($query) => $query->where('branch_id', $departmentId))
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('application_no', 'like', "%{$search}%")
@@ -50,7 +51,7 @@ class ServiceApplicationController extends Controller
             'departments' => Branch::visibleTo($request->user())->orderBy('name')->get(),
             'search' => $search,
             'statusId' => $statusId,
-            'departmentId' => $departmentId,
+            'branchId' => $branchId,
         ]);
     }
 
@@ -59,7 +60,7 @@ class ServiceApplicationController extends Controller
         abort_unless($request->user()->hasRole('admin', 'reception'), 403);
         $person = $request->integer('person_id') ? Person::find($request->integer('person_id')) : null;
 
-        return view('staff.applications.create', $this->formData(new ServiceApplication(), $person));
+        return view('staff.applications.create', $this->formData(new ServiceApplication, $person));
     }
 
     public function store(Request $request): RedirectResponse
@@ -72,8 +73,9 @@ class ServiceApplicationController extends Controller
             $status = ApplicationStatus::findOrFail($data['status_id']);
 
             $data['application_no'] = $this->generateApplicationNumber();
-            $data['department_id'] = $data['department_id'] ?: $service->department_id;
-            $data['branch_id'] = $service->branch_id;
+            $data['department_id'] = $service->department_id;
+            $data['branch_id'] = $data['branch_id'] ?: $service->branch_id;
+            $this->validateOfficerBranch($data['assigned_officer_id'] ?? null, $data['branch_id']);
             $data['submitted_by'] = $request->user()->id;
             $data['submitted_at'] = $data['submitted_at'] ?? now();
             $data['required_documents'] = $service->required_documents ?? [];
@@ -119,6 +121,8 @@ class ServiceApplicationController extends Controller
                 'statusHistories.toStatus',
                 'statusHistories.changedBy',
                 'statusHistories.department',
+                'statusHistories.branch',
+                'statusHistories.assignedOfficer',
             ]),
             'statuses' => ApplicationStatus::orderBy('sort_order')->get(),
             'documentTypes' => DocumentType::where('is_active', true)->orderBy('name')->get(),
@@ -134,6 +138,7 @@ class ServiceApplicationController extends Controller
     public function edit(ServiceApplication $application): View
     {
         abort_unless(auth()->user()?->hasRole('admin', 'reception'), 403);
+
         return view('staff.applications.edit', $this->formData($application, $application->person));
     }
 
@@ -142,6 +147,8 @@ class ServiceApplicationController extends Controller
         abort_unless($request->user()->hasRole('admin', 'reception'), 403);
         $data = $this->validated($request, $application);
         $oldStatusId = $application->status_id;
+        $this->validateOfficerBranch($data['assigned_officer_id'] ?? null, $data['branch_id']);
+        $data['department_id'] = Service::findOrFail($data['service_id'])->department_id;
 
         $oldValues = $application->only(array_keys($data));
         $application->update($data);
@@ -216,7 +223,7 @@ class ServiceApplicationController extends Controller
         return $request->validate([
             'person_id' => ['required', 'exists:people,id'],
             'service_id' => ['required', 'exists:services,id'],
-            'department_id' => ['nullable', 'exists:branches,id'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'assigned_officer_id' => ['nullable', 'exists:users,id'],
             'submitted_at' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:submitted_at'],
@@ -259,12 +266,32 @@ class ServiceApplicationController extends Controller
             'application_id' => $application->id,
             'department_id' => $application->department_id,
             'branch_id' => $application->branch_id,
+            'assigned_officer_id' => $application->assigned_officer_id,
             'from_status_id' => $fromStatusId,
             'to_status_id' => $toStatusId,
             'changed_by' => $userId,
             'remarks' => $remarks,
             'changed_at' => now(),
         ]);
+    }
+
+    private function validateOfficerBranch(?int $officerId, ?int $branchId): void
+    {
+        if (! $officerId) {
+            return;
+        }
+
+        $valid = User::whereKey($officerId)
+            ->where('branch_id', $branchId)
+            ->where('is_active', true)
+            ->whereHas('roles', fn ($query) => $query->whereIn('slug', ['branch_head', 'branch_staff']))
+            ->exists();
+
+        if (! $valid) {
+            throw ValidationException::withMessages([
+                'assigned_officer_id' => 'The selected officer must belong to the selected branch.',
+            ]);
+        }
     }
 
     private function notifyStatusChange(ServiceApplication $application, ApplicationStatus $status): void

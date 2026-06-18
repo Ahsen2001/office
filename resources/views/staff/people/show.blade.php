@@ -34,8 +34,21 @@
                 <div class="small opacity-75">Registered {{ $person->registered_at?->format('Y-m-d H:i') }} by {{ $person->registrar?->name ?? 'System' }}</div>
             </div>
             <div class="col-md-auto text-center">
-                @if($person->qr_code_path)
-                    <img src="{{ Storage::url($person->qr_code_path) }}" class="bg-white rounded p-2" style="width: 130px;" alt="QR code">
+                @if($person->qr_code_path && Storage::disk('public')->exists($person->qr_code_path))
+                    <img src="{{ route('staff.people.qr.view', $person) }}" class="bg-white rounded p-2" style="width: 130px;" alt="QR code">
+                    <div class="small mt-1">QR code</div>
+                @else
+                    <div class="bg-white bg-opacity-10 rounded p-3 small">QR code unavailable</div>
+                @endif
+            </div>
+            <div class="col-md-auto text-center">
+                @if($person->barcode_path && Storage::disk('public')->exists($person->barcode_path))
+                    <div class="bg-white rounded p-2 d-flex align-items-center" style="width: 210px; height: 96px;">
+                        <img src="{{ route('staff.people.barcode.view', $person) }}" class="w-100" style="max-height: 72px;" alt="Barcode">
+                    </div>
+                    <div class="small mt-1">Barcode</div>
+                @else
+                    <div class="bg-white bg-opacity-10 rounded p-3 small">Barcode unavailable</div>
                 @endif
             </div>
         </div>
@@ -126,6 +139,13 @@
                                 <div class="col-md-8"><input type="file" name="document" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required></div>
                                 <div class="col-md-4"><button class="btn btn-sm btn-primary w-100">Upload Document</button></div>
                                 <div class="col-12"><input type="text" name="remarks" class="form-control form-control-sm" placeholder="Remarks"></div>
+                                <div class="col-12">
+                                    <select name="visibility" class="form-select form-select-sm" required>
+                                        <option value="internal">Internal only</option>
+                                        <option value="branch">Branch only</option>
+                                        <option value="public">Public visible</option>
+                                    </select>
+                                </div>
                             </div>
                         </form>
                         @forelse($person->documents as $document)

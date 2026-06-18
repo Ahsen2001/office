@@ -24,7 +24,7 @@
                 <select name="branch_id" class="form-select">
                     <option value="">All branches</option>
                     @foreach($departments as $department)
-                        <option value="{{ $department->id }}" @selected($departmentId == $department->id)>{{ $department->name }}</option>
+                        <option value="{{ $department->id }}" @selected($branchId == $department->id)>{{ $department->name }}</option>
                     @endforeach
                 </select>
             </div>

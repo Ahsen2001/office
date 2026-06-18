@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QrBarcodeController extends Controller
@@ -57,11 +58,31 @@ class QrBarcodeController extends Controller
         return Storage::disk('public')->download($person->qr_code_path, $person->person_code.'-qr.svg');
     }
 
+    public function viewQr(Person $person): BinaryFileResponse
+    {
+        abort_unless($person->qr_code_path && Storage::disk('public')->exists($person->qr_code_path), 404);
+
+        return response()->file(Storage::disk('public')->path($person->qr_code_path), [
+            'Content-Type' => 'image/svg+xml',
+            'Content-Disposition' => 'inline',
+        ]);
+    }
+
     public function downloadBarcode(Person $person): StreamedResponse
     {
         abort_unless($person->barcode_path && Storage::disk('public')->exists($person->barcode_path), 404);
 
         return Storage::disk('public')->download($person->barcode_path, $person->person_code.'-barcode.svg');
+    }
+
+    public function viewBarcode(Person $person): BinaryFileResponse
+    {
+        abort_unless($person->barcode_path && Storage::disk('public')->exists($person->barcode_path), 404);
+
+        return response()->file(Storage::disk('public')->path($person->barcode_path), [
+            'Content-Type' => 'image/svg+xml',
+            'Content-Disposition' => 'inline',
+        ]);
     }
 
     public function regenerate(Person $person, CodeGeneratorService $codes): RedirectResponse

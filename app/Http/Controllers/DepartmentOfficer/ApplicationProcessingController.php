@@ -84,6 +84,8 @@ class ApplicationProcessingController extends Controller
         ApplicationStatusHistory::create([
             'application_id' => $application->id,
             'department_id' => $application->department_id,
+            'branch_id' => $application->branch_id,
+            'assigned_officer_id' => $application->assigned_officer_id,
             'from_status_id' => $oldStatusId,
             'to_status_id' => $status->id,
             'changed_by' => $request->user()->id,

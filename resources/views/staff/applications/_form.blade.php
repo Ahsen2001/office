@@ -20,12 +20,13 @@
     </div>
     <div class="col-md-4">
         <label class="form-label">Branch</label>
-        <select name="department_id" class="form-select">
+        <select name="branch_id" class="form-select">
             <option value="">Use service branch</option>
             @foreach($departments as $department)
-                <option value="{{ $department->id }}" @selected(old('department_id', $application->branch_id ?: $application->department_id) == $department->id)>{{ $department->name }}</option>
+                <option value="{{ $department->id }}" @selected(old('branch_id', $application->branch_id) == $department->id)>{{ $department->name }}</option>
             @endforeach
         </select>
+        @error('branch_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-4">
         <label class="form-label">Assigned officer</label>
@@ -35,6 +36,7 @@
                 <option value="{{ $officer->id }}" @selected(old('assigned_officer_id', $application->assigned_officer_id) == $officer->id)>{{ $officer->name }}</option>
             @endforeach
         </select>
+        @error('assigned_officer_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-4">
         <label class="form-label">Status</label>

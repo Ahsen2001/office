@@ -56,6 +56,29 @@
     min-height: 320px;
 }
 
+.profile-settings-hero {
+    color: #fff;
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 88% 20%, rgba(255, 255, 255, .2), transparent 24%),
+        linear-gradient(135deg, #1e3a8a, #2563eb 52%, #059669);
+    box-shadow: 0 24px 55px rgba(30, 64, 175, .2);
+}
+
+.profile-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 24px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    color: #1d4ed8;
+    background: #fff;
+    font-size: 2rem;
+    font-weight: 800;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, .18);
+}
+
 @media (max-width: 575.98px) {
     .office-profile-photo {
         width: 96px;
