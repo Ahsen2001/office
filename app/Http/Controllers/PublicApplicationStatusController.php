@@ -4,23 +4,39 @@ namespace App\Http\Controllers;
 
 use App\Models\ServiceApplication;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class PublicApplicationStatusController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
-        $application = null;
+        $validated = $request->validate([
+            'application_no' => ['nullable', 'string', 'max:50'],
+            'person_code' => ['nullable', 'string', 'max:120'],
+            'nic' => ['nullable', 'string', 'max:80'],
+            'qr' => ['nullable', 'string', 'max:500'],
+        ]);
+
         $applications = collect();
-        $searched = $request->hasAny(['application_no', 'person_code', 'nic', 'qr']);
+        $applicationNo = trim($validated['application_no'] ?? '');
+        $personCode = $this->normalizeQrValue(trim(($validated['person_code'] ?? '') ?: ($validated['qr'] ?? '')));
+        $nic = trim($validated['nic'] ?? '');
+        $searched = $applicationNo !== '' || $personCode !== '' || $nic !== '';
 
         if ($searched) {
-            $applicationNo = trim($request->string('application_no')->toString());
-            $personCode = $this->normalizeQrValue(trim($request->string('person_code')->toString() ?: $request->string('qr')->toString()));
-            $nic = trim($request->string('nic')->toString());
-
             $applications = ServiceApplication::query()
-                ->with(['person', 'service', 'branch', 'assignedOfficer', 'status', 'documents.documentType', 'appointments'])
+                ->with([
+                    'service:id,name',
+                    'branch:id,name,phone',
+                    'assignedOfficer:id,name,phone,branch_id',
+                    'assignedOfficer.roles:id,name',
+                    'status:id,code,name',
+                    'documents:id,application_id,document_type_id,document_title',
+                    'documents.documentType:id,name',
+                    'appointments' => fn ($query) => $query
+                        ->select(['id', 'application_id', 'appointment_date', 'start_time', 'status'])
+                        ->whereIn('status', ['scheduled', 'rescheduled']),
+                ])
                 ->when($applicationNo, fn ($query) => $query->where('application_no', '=', $applicationNo))
                 ->when($personCode, fn ($query) => $query->whereHas('person', fn ($personQuery) => $personQuery
                     ->where('person_code', '=', $personCode)
@@ -32,11 +48,12 @@ class PublicApplicationStatusController extends Controller
                 ->latest('submitted_at')
                 ->limit(10)
                 ->get();
-
-            $application = $applications->first();
         }
 
-        return view('public.status-check', compact('application', 'applications', 'searched'));
+        return response()
+            ->view('public.status-check', compact('applications', 'searched'))
+            ->header('Cache-Control', 'no-store, private, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 
     private function normalizeQrValue(string $value): string

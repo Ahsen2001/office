@@ -87,7 +87,16 @@
                                     <div class="col-md-6 col-xl-3"><div class="service-meta-label">Last updated</div><div class="fw-semibold">{{ $item->updated_at?->format('Y-m-d H:i') ?? 'Not recorded' }}</div></div>
                                     <div class="col-md-6"><div class="service-meta-label">Missing documents</div><div class="fw-semibold">{{ $missing->isEmpty() ? 'None currently requested' : $missing->implode(', ') }}</div></div>
                                     <div class="col-md-6"><div class="service-meta-label">Appointment</div><div class="fw-semibold">{{ $appointment ? $appointment->appointment_date?->format('Y-m-d').' at '.$appointment->start_time?->format('H:i') : 'No upcoming appointment' }}</div></div>
-                                    <div class="col-md-6"><div class="service-meta-label">In-charge officer</div><div class="fw-semibold">{{ $item->assignedOfficer?->name ?? 'Not assigned' }}</div><div class="small text-muted">{{ $item->assignedOfficer?->phone ?? 'Contact the branch office' }}</div></div>
+                                    <div class="col-md-6">
+                                        <div class="service-meta-label">In-charge officer</div>
+                                        <div class="fw-semibold">{{ $item->assignedOfficer?->name ?? 'Not assigned' }}</div>
+                                        <div class="small text-muted">{{ $item->assignedOfficer?->roles->first()?->name ?? 'Designation not recorded' }}</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="service-meta-label">Officer contact</div>
+                                        <div class="fw-semibold">{{ $item->assignedOfficer?->phone ?? $item->branch?->phone ?? 'Contact the branch office' }}</div>
+                                        <div class="small text-muted">{{ $item->branch?->name }}</div>
+                                    </div>
                                 </div>
                             </div>
                         </article>

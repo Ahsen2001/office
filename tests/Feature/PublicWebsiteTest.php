@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Models\ApplicationStatus;
 use App\Models\Department;
 use App\Models\Person;
+use App\Models\Role;
 use App\Models\Service;
 use App\Models\ServiceApplication;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -107,5 +109,68 @@ class PublicWebsiteTest extends TestCase
             ->assertDontSee('private@example.test')
             ->assertDontSee('Private home address')
             ->assertDontSee('Private application details');
+    }
+
+    public function test_blank_public_status_query_does_not_return_recent_applications(): void
+    {
+        $response = $this->get(route('public.status', ['application_no' => '']));
+
+        $response->assertOk()
+            ->assertDontSee('status-result')
+            ->assertHeader('Cache-Control', 'max-age=0, no-store, private');
+    }
+
+    public function test_public_status_displays_safe_in_charge_officer_details(): void
+    {
+        $department = Department::create(['code' => 'OFF', 'name' => 'Officer Department', 'is_active' => true]);
+        $service = Service::create([
+            'department_id' => $department->id,
+            'code' => 'OFFICER-SVC',
+            'name' => 'Officer Service',
+            'is_active' => true,
+        ]);
+        $status = ApplicationStatus::create([
+            'code' => 'processing',
+            'name' => 'Processing',
+            'sort_order' => 40,
+            'is_terminal' => false,
+            'is_active' => true,
+        ]);
+        $role = Role::create(['slug' => 'branch_staff', 'name' => 'Branch Staff', 'is_active' => true]);
+        $officer = User::factory()->create(['name' => 'Public Contact Officer', 'phone' => '0112345678']);
+        $officer->roles()->attach($role);
+        $person = Person::create([
+            'person_code' => 'PER-OFFICER-001',
+            'qr_code_value' => 'PER-OFFICER-001',
+            'barcode_value' => 'PEROFFICER001',
+            'first_name' => 'Hidden',
+            'last_name' => 'Applicant',
+            'full_name' => 'Hidden Applicant',
+            'national_id' => 'HIDDEN-NIC',
+            'phone' => '0770000000',
+            'address_line_1' => 'Hidden address',
+            'registered_at' => now(),
+            'is_active' => true,
+        ]);
+
+        ServiceApplication::create([
+            'application_no' => 'APP-OFFICER-001',
+            'person_id' => $person->id,
+            'service_id' => $service->id,
+            'department_id' => $department->id,
+            'assigned_officer_id' => $officer->id,
+            'status_id' => $status->id,
+            'priority' => 'normal',
+            'submitted_at' => now(),
+        ]);
+
+        $this->get(route('public.status', ['application_no' => 'APP-OFFICER-001']))
+            ->assertOk()
+            ->assertSee('Public Contact Officer')
+            ->assertSee('Branch Staff')
+            ->assertSee('0112345678')
+            ->assertDontSee('Hidden Applicant')
+            ->assertDontSee('0770000000')
+            ->assertDontSee('Hidden address');
     }
 }

@@ -31,7 +31,7 @@
             $isAdmin ? ['label' => 'Contact Messages', 'icon' => 'fa-envelope-open-text', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*'] : null,
             $isAdmin ? ['label' => 'Settings', 'icon' => 'fa-gear', 'route' => 'admin.settings.index', 'active' => 'admin.settings.*'] : null,
             $isAdmin ? ['label' => 'Audit Logs', 'icon' => 'fa-shield-halved', 'route' => 'admin.audit-logs.index', 'active' => 'admin.audit-logs.*'] : null,
-            $isManagement ? ['label' => 'Reports', 'icon' => 'fa-chart-line', 'route' => 'management.reports.index', 'active' => 'management.reports.*'] : null,
+            ($isAdmin || $isManagement || $isReception || $isBranchUser) ? ['label' => 'Reports', 'icon' => 'fa-chart-line', 'route' => 'reports.index', 'active' => 'reports.*'] : null,
         ]),
     ];
 @endphp

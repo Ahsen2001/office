@@ -9,7 +9,7 @@
             <h1 class="h3 mb-1">Performance overview</h1>
             <p class="text-muted mb-0">Monitor application volume, pending work, reports, and department performance.</p>
         </div>
-        <a href="{{ route('management.reports.index') }}" class="btn btn-primary"><i class="fa-solid fa-chart-line me-1"></i> Open Reports</a>
+        <a href="{{ route('reports.index') }}" class="btn btn-primary"><i class="fa-solid fa-chart-line me-1"></i> Open Reports</a>
     </div>
 
     <div class="row g-3">

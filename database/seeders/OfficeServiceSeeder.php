@@ -14,13 +14,17 @@ class OfficeServiceSeeder extends Seeder
         $now = Carbon::now();
 
         DB::transaction(function () use ($now) {
-            DB::table('roles')->insert([
+            $roles = [
                 ['name' => 'Admin', 'slug' => 'admin', 'description' => 'Full system access.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
                 ['name' => 'Reception Staff', 'slug' => 'reception', 'description' => 'Registers people and creates applications.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
                 ['name' => 'Branch Head', 'slug' => 'branch_head', 'description' => 'Manages an assigned branch.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
                 ['name' => 'Branch Staff', 'slug' => 'branch_staff', 'description' => 'Processes assigned branch applications.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
                 ['name' => 'Divisional Secretary / ADS / AO', 'slug' => 'management', 'description' => 'Monitors all branches and reports.', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
-            ]);
+            ];
+
+            foreach ($roles as $role) {
+                DB::table('roles')->updateOrInsert(['slug' => $role['slug']], $role);
+            }
 
             $adminRoleId = DB::table('roles')->where('slug', 'admin')->value('id');
             $staffRoleId = DB::table('roles')->where('slug', 'reception')->value('id');

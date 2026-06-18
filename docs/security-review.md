@@ -1,85 +1,103 @@
-# Security Review and Implemented Hardening
+# Security Review and Hardening Guide
 
-This project uses Laravel's built-in protections as the foundation: Blade escaping, CSRF middleware, validated requests, Eloquent/query builder parameter binding, hashed passwords, session regeneration, and login throttling.
+## Implemented Controls
 
-## Implemented Code Locations
+| Area | Implementation |
+| --- | --- |
+| Passwords | `User` uses Laravel's `hashed` cast; authentication verifies hashes with `Hash::check`. |
+| Login protection | `LoginRequest` limits attempts to five per normalized email/IP and rejects inactive users. |
+| CSRF | All web state changes use Laravel web middleware and Blade `@csrf`. |
+| SQL injection | Controllers use Eloquent/query-builder bindings and validated filter values. |
+| XSS | Blade output is escaped; dynamic search suggestions use `textContent`; CSP restricts executable sources. |
+| Sessions | Login regenerates session IDs; logout invalidates sessions and CSRF tokens; cookies are HTTP-only and SameSite. |
+| RBAC | Route groups and role middleware protect Admin, Management, Reception, Branch Head, and Branch Staff features. |
+| Branch isolation | Middleware, model scopes, policies, controller filters, and forced report filters enforce `branch_id`. |
+| Documents | Private files use the local disk and are streamed only after policy authorization. |
+| Uploads | Documents validate extension, MIME type, and size; profile photos validate as images. |
+| Public privacy | Status lookups use exact matching, reject blank searches, select narrow relationships, hide applicant data, and return `no-store`. |
+| HTTP headers | `SecurityHeaders` adds CSP, frame denial, MIME sniffing protection, referrer policy, permissions policy, and HSTS over HTTPS. |
+| Audit | `AuditLogger` records sensitive changes with actor, action, model, IP, user agent, and old/new values. |
+| Backups | `php artisan office:backup` writes timestamped MySQL dumps outside the public directory. |
 
-| Security Area | Location | What to Check |
-| --- | --- | --- |
-| Password hashing | `app/Models/User.php`, `app/Http/Controllers/Admin/UserController.php` | User model casts `password` as `hashed`; admin user creation/update also uses `Hash::make`. |
-| Login throttling | `app/Http/Requests/Auth/LoginRequest.php` | Failed attempts are rate-limited by email and IP. |
-| Secure session handling | `app/Http/Controllers/Auth/AuthenticatedSessionController.php`, `.env.example` | Session regenerates on login, invalidates on logout, and production defaults recommend encrypted database sessions. |
-| CSRF protection | Blade forms and Laravel web middleware | Forms use `@csrf`; Laravel validates tokens on POST/PUT/PATCH/DELETE. |
-| SQL injection prevention | Controllers and models | Queries use Eloquent/query builder, not concatenated raw SQL. |
-| XSS protection | Blade views and `resources/views/admin/partials/navbar.blade.php` | Blade escapes output; AJAX search suggestions are rendered with `textContent` instead of unsafe HTML interpolation. |
-| Role-based access | `routes/web.php`, `app/Http/Middleware/*Middleware.php` | Admin, staff, officer, and manager routes are grouped by middleware. |
-| Department restriction | `app/Http/Controllers/DepartmentOfficer/ApplicationProcessingController.php` | Officers can only view/update applications from their assigned department. |
-| Authorization policies | `app/Policies/ApplicationDocumentPolicy.php`, `app/Providers/AppServiceProvider.php` | Document view/delete permissions are centralized in a Laravel policy. |
-| Secure document download | `app/Http/Controllers/Staff/DocumentController.php` | Preview/download/delete methods authorize access through the policy before streaming files. |
-| File upload validation | `app/Http/Controllers/Staff/DocumentController.php`, `app/Http/Controllers/Staff/PersonController.php` | Documents validate extension, MIME type, and size; profile photos validate as images. |
-| Security headers | `app/Http/Middleware/SecurityHeaders.php`, `bootstrap/app.php` | Adds nosniff, frame denial, referrer policy, permissions policy, and HSTS over HTTPS. |
-| Audit logs | `app/Support/AuditLogger.php` and controllers | Important actions are recorded with user, module, IP, user agent, old/new values, and timestamps. |
-| Backup system | `routes/console.php` | `php artisan office:backup` creates timestamped MySQL dumps under `storage/app/backups`. |
+## Important Code Locations
 
-## Correct Code Patterns
+- Authentication: `app/Http/Requests/Auth/LoginRequest.php`
+- Security headers: `app/Http/Middleware/SecurityHeaders.php`
+- Branch middleware: `app/Http/Middleware/BranchAccessMiddleware.php`
+- Report scoping: `app/Http/Controllers/Manager/ReportController.php`
+- Public status separation: `app/Http/Controllers/PublicApplicationStatusController.php`
+- Document policy: `app/Policies/ApplicationDocumentPolicy.php`
+- Secure file streaming: `app/Http/Controllers/Staff/DocumentController.php`
+- Audit helper: `app/Support/AuditLogger.php`
+- Backup command: `routes/console.php`
 
-### Protected Routes
+## Correct Patterns
 
-Place role-protected routes in `routes/web.php`:
+### Role-Protected Routes
+
+Place routes in `routes/web.php`:
 
 ```php
-Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('users', AdminUserController::class)->except(['show']);
-});
-
-Route::middleware(['auth', 'active', 'role:admin,department_officer'])->prefix('officer')->name('officer.')->group(function () {
-    Route::get('/applications/{application}', [ApplicationProcessingController::class, 'show']);
-});
+Route::middleware(['auth', 'active', 'role:admin,management'])
+    ->prefix('reports')
+    ->group(function () {
+        Route::get('/', [ReportController::class, 'index']);
+    });
 ```
+
+### Branch-Scoped Queries
+
+```php
+$applications = ServiceApplication::query()
+    ->visibleTo($request->user())
+    ->with(['branch', 'status'])
+    ->paginate();
+```
+
+Never trust a submitted branch ID for branch users. Replace it with the authenticated user's branch before querying.
 
 ### Validated Input
 
-Place validation in controllers or Form Request classes:
-
 ```php
 $data = $request->validate([
-    'email' => ['required', 'email', 'max:150'],
-    'amount' => ['required', 'numeric', 'min:0'],
+    'status_id' => ['required', 'exists:application_statuses,id'],
+    'remarks' => ['nullable', 'string', 'max:5000'],
 ]);
 ```
 
-### Safe Output
-
-Use Blade escaped output:
+### Safe Blade Output
 
 ```blade
-{{ $person->full_name }}
+{{ $application->remarks }}
 ```
 
-Only use `{!! !!}` for trusted, sanitized HTML.
+Avoid `{!! !!}` unless content has been independently sanitized.
 
 ### Secure Downloads
 
-Documents should be stored on the `local` disk and streamed through a controller after authorization:
-
 ```php
-$this->authorizeDocumentAccess($document, false);
+Gate::authorize('view', $document);
 return response()->streamDownload($callback, $document->file_name);
 ```
 
-### Audit Logging
-
-Place audit calls immediately after the database change succeeds:
-
-```php
-AuditLogger::log('update', 'applications', "Updated application {$application->application_no}.", $application, $oldValues, $newValues, $request);
-```
+Private documents must not be exposed with direct `/storage/...` URLs.
 
 ## Production Checklist
 
-- Set `APP_ENV=production` and `APP_DEBUG=false`.
-- Set `SESSION_DRIVER=database`, `SESSION_ENCRYPT=true`, `SESSION_HTTP_ONLY=true`, and `SESSION_SECURE_COOKIE=true` when using HTTPS.
-- Protect `storage/app/backups` at the server level and copy backups to encrypted off-site storage.
-- Run `php artisan storage:link` only for public assets such as profile photos and QR images, not private documents.
-- Use HTTPS for camera access, QR scanning, login, and downloads.
-- Rotate credentials and keep `.env` out of version control.
+- Set `APP_ENV=production`, `APP_DEBUG=false`, and a unique `APP_KEY`.
+- Serve the application only through HTTPS.
+- Set `SESSION_SECURE_COOKIE=true` and retain `SESSION_HTTP_ONLY=true`.
+- Rotate seeded passwords and database credentials.
+- Restrict database accounts to required privileges.
+- Keep `.env`, `storage/app/private`, and `storage/app/backups` outside public access.
+- Run `php artisan config:cache`, `route:cache`, and `view:cache` after deployment.
+- Schedule backups and copy them to encrypted off-site storage.
+- Monitor failed logins, authorization failures, audit logs, and backup results.
+- Periodically run `composer audit`, `npm audit`, and the full test suite.
+- Review CSP sources when adding third-party scripts.
+
+## Residual Risks
+
+- The current CSP permits inline scripts/styles because existing Blade pages contain inline Chart.js and scanner code. Moving these scripts into compiled assets would allow removal of `'unsafe-inline'`.
+- Public NIC/passport lookup is explicitly required. Deployments with stricter privacy rules should require an application number plus a second identifier.
+- The backup command passes database credentials to `mysqldump`; production deployments should prefer a protected MySQL option file or managed backup service.

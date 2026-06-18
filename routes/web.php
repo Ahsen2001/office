@@ -83,14 +83,20 @@ Route::middleware(['auth', 'active', 'role:admin,management,reception,branch_hea
 
 Route::middleware(['auth', 'active', 'management'])->prefix('management')->name('management.')->group(function () {
     Route::get('/dashboard', [RoleDashboardController::class, 'management'])->name('dashboard');
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/export/{report}/{format}', [ReportController::class, 'export'])->name('reports.export');
     Route::get('/applications', [ServiceApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{application}/receipt', [ServiceApplicationController::class, 'receipt'])->name('applications.receipt');
     Route::get('/applications/{application}', [ServiceApplicationController::class, 'show'])->name('applications.show');
     Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
 });
+
+Route::middleware(['auth', 'active', 'role:admin,management,reception,branch_head,branch_staff'])
+    ->prefix('reports')
+    ->name('reports.')
+    ->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/export/{report}/{format}', [ReportController::class, 'export'])->name('export');
+    });
 
 Route::middleware(['auth', 'active', 'reception'])->prefix('reception')->name('reception.')->group(function () {
     Route::get('/dashboard', [RoleDashboardController::class, 'reception'])->name('dashboard');

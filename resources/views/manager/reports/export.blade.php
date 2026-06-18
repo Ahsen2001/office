@@ -2,18 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>{{ ucwords(str_replace('_', ' ', $report)) }} Report</title>
+    <title>{{ $label }} Report</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111827; }
-        h1 { margin-bottom: 4px; }
+        h1 { margin-bottom: 4px; color: #1d4ed8; }
+        .meta { color: #475569; margin-bottom: 4px; }
         table { width: 100%; border-collapse: collapse; margin-top: 14px; }
         th, td { border: 1px solid #d1d5db; padding: 6px; text-align: left; }
         th { background: #f3f4f6; }
     </style>
 </head>
 <body>
-    <h1>{{ ucwords(str_replace('_', ' ', $report)) }} Report</h1>
-    <div>Date: {{ $filters['date_from'] ?: 'Any' }} to {{ $filters['date_to'] ?: 'Any' }}</div>
+    <h1>{{ $label }} Report</h1>
+    <div class="meta">Generated {{ now()->format('Y-m-d H:i') }}</div>
+    <div class="meta">Date: {{ $filters['date_from'] ?: 'Any' }} to {{ $filters['date_to'] ?: 'Any' }}</div>
     <table>
         <thead>
             <tr>
