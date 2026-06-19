@@ -47,6 +47,8 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
+            'designation' => $validated['designation'] ?? null,
+            'created_by' => $request->user()->id,
             'password' => Hash::make($validated['password']),
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -88,6 +90,7 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
+            'designation' => $validated['designation'] ?? null,
             'is_active' => $request->boolean('is_active'),
         ]);
 

@@ -62,13 +62,13 @@ class OfficeServiceSeeder extends Seeder
             ]);
 
             $recordsBranchId = DB::table('branches')->insertGetId([
-                'code' => 'REC', 'name' => 'Registration Branch', 'phone' => '+94-11-000-2000',
+                'code' => 'REG', 'name' => 'Registration Branch', 'phone' => '+94-11-000-2000',
                 'email' => 'registration@example.office', 'location' => 'First Floor',
                 'description' => 'Certificates, registrations, and record verification.', 'is_active' => true,
                 'created_at' => $now, 'updated_at' => $now,
             ]);
 
-            foreach ([['LAND', 'Land Branch'], ['SOCIAL', 'Social Services Branch'], ['SAMURDHI', 'Samurdhi Branch'], ['PENSION', 'Pension Branch'], ['ACCOUNTS', 'Accounts Branch'], ['DEV', 'Development Branch'], ['GN', 'Grama Niladhari Coordination Branch']] as [$code, $name]) {
+            foreach ([['LAND', 'Land Branch'], ['SOC', 'Social Services Branch'], ['SAM', 'Samurdhi Branch'], ['PEN', 'Pension Branch'], ['ACC', 'Accounts Branch'], ['DEV', 'Development Branch'], ['GN', 'Grama Niladhari Coordination Branch']] as [$code, $name]) {
                 DB::table('branches')->insert(['code' => $code, 'name' => $name, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
             }
 
@@ -104,6 +104,7 @@ class OfficeServiceSeeder extends Seeder
                 'name' => 'Records Officer',
                 'email' => 'officer@office.test',
                 'phone' => '+94770000003',
+                'designation' => 'Registration Officer',
                 'email_verified_at' => $now,
                 'password' => Hash::make('password'),
                 'is_active' => true,
@@ -117,6 +118,7 @@ class OfficeServiceSeeder extends Seeder
                 'name' => 'Registration Branch Head',
                 'email' => 'branchhead@office.test',
                 'phone' => '+94770000005',
+                'designation' => 'Branch Head',
                 'email_verified_at' => $now,
                 'password' => Hash::make('password'),
                 'is_active' => true,
@@ -258,7 +260,7 @@ class OfficeServiceSeeder extends Seeder
             ]);
 
             DB::table('appointments')->insert([
-                'appointment_no' => 'APT-2026-000001',
+                'appointment_no' => 'REG-APT-2026-0001',
                 'application_id' => $applicationId,
                 'person_id' => $personId,
                 'department_id' => $recordsDepartmentId,

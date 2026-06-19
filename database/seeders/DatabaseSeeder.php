@@ -16,5 +16,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(OfficeServiceSeeder::class);
         $this->call(BranchAndRoleSeeder::class);
+        $this->call(BranchTestingUsersSeeder::class);
     }
 }

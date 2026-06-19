@@ -7,7 +7,7 @@
     <div><h1 class="h3 mb-1">{{ $application->application_no }}</h1><div class="text-muted">{{ $application->person?->full_name }} - {{ $application->service?->name }}</div></div>
     <div class="d-flex gap-2">
         @if(auth()->user()->hasRole('admin', 'reception'))<a class="btn btn-outline-primary" href="{{ route('staff.applications.edit', $application) }}">Edit</a>@endif
-        @unless(auth()->user()->hasRole('management'))<a class="btn btn-outline-secondary" href="{{ route('staff.appointments.create', ['application_id' => $application->id]) }}">Book Appointment</a>@endunless
+        @if(auth()->user()->hasRole('admin', 'reception'))<a class="btn btn-outline-secondary" href="{{ route('staff.appointments.create', ['application_id' => $application->id]) }}">Book Appointment</a>@endif
         <a class="btn btn-success" href="{{ $readOnly ? route('management.applications.receipt', $application) : route('staff.applications.receipt', $application) }}">Print Receipt</a>
     </div>
 </div>

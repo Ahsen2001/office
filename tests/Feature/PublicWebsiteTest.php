@@ -137,7 +137,11 @@ class PublicWebsiteTest extends TestCase
             'is_active' => true,
         ]);
         $role = Role::create(['slug' => 'branch_staff', 'name' => 'Branch Staff', 'is_active' => true]);
-        $officer = User::factory()->create(['name' => 'Public Contact Officer', 'phone' => '0112345678']);
+        $officer = User::factory()->create([
+            'name' => 'Public Contact Officer',
+            'email' => 'private-officer-login@office.test',
+            'phone' => '0112345678',
+        ]);
         $officer->roles()->attach($role);
         $person = Person::create([
             'person_code' => 'PER-OFFICER-001',
@@ -169,8 +173,11 @@ class PublicWebsiteTest extends TestCase
             ->assertSee('Public Contact Officer')
             ->assertSee('Branch Staff')
             ->assertSee('0112345678')
+            ->assertSee('Officer branch')
             ->assertDontSee('Hidden Applicant')
             ->assertDontSee('0770000000')
-            ->assertDontSee('Hidden address');
+            ->assertDontSee('Hidden address')
+            ->assertDontSee('private-officer-login@office.test')
+            ->assertDontSee('Missing documents');
     }
 }

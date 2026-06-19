@@ -28,11 +28,11 @@ class BranchAndRoleSeeder extends Seeder
         $branches = [
             ['code' => 'ADMIN', 'name' => 'Administration Branch'],
             ['code' => 'LAND', 'name' => 'Land Branch'],
-            ['code' => 'SOCIAL', 'name' => 'Social Services Branch'],
-            ['code' => 'SAMURDHI', 'name' => 'Samurdhi Branch'],
-            ['code' => 'PENSION', 'name' => 'Pension Branch'],
-            ['code' => 'REC', 'name' => 'Registration Branch'],
-            ['code' => 'ACCOUNTS', 'name' => 'Accounts Branch'],
+            ['code' => 'SOC', 'name' => 'Social Services Branch'],
+            ['code' => 'SAM', 'name' => 'Samurdhi Branch'],
+            ['code' => 'PEN', 'name' => 'Pension Branch'],
+            ['code' => 'REG', 'name' => 'Registration Branch'],
+            ['code' => 'ACC', 'name' => 'Accounts Branch'],
             ['code' => 'DEV', 'name' => 'Development Branch'],
             ['code' => 'GN', 'name' => 'Grama Niladhari Coordination Branch'],
         ];
@@ -42,14 +42,15 @@ class BranchAndRoleSeeder extends Seeder
         }
 
         $this->mergeLegacyBranch('GEN', 'ADMIN');
-        $this->mergeLegacyBranch('REG', 'REC');
+        $this->mergeLegacyBranch('REC', 'REG');
 
-        $registration = Branch::where('code', 'REC')->firstOrFail();
+        $registration = Branch::where('code', 'REG')->firstOrFail();
         $branchHead = User::updateOrCreate(
             ['email' => 'branchhead@office.test'],
             [
                 'branch_id' => $registration->id,
                 'name' => 'Registration Branch Head',
+                'designation' => 'Branch Head',
                 'phone' => '+94770000005',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),

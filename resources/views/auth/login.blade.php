@@ -64,6 +64,25 @@
                     </tbody>
                 </table>
             </div>
+            <details class="mt-2">
+                <summary class="fw-semibold text-primary">Additional branch test accounts</summary>
+                <div class="table-responsive mt-2">
+                    <table class="table table-sm mb-1 align-middle">
+                        <thead><tr><th>Branch</th><th>Head</th><th>Staff</th></tr></thead>
+                        <tbody>
+                            <tr><td>Administration</td><td>adminhead@office.test</td><td>adminofficer@office.test</td></tr>
+                            <tr><td>Accounts</td><td>accountshead@office.test</td><td>accountsofficer@office.test</td></tr>
+                            <tr><td>Land</td><td>landhead@office.test</td><td>landofficer@office.test</td></tr>
+                            <tr><td>Social Services</td><td>socialhead@office.test</td><td>socialofficer@office.test</td></tr>
+                            <tr><td>Samurdhi</td><td>samurdhihead@office.test</td><td>samurdhiofficer@office.test</td></tr>
+                            <tr><td>Pension</td><td>pensionhead@office.test</td><td>pensionofficer@office.test</td></tr>
+                            <tr><td>Registration</td><td>registrationhead@office.test</td><td>registrationofficer@office.test</td></tr>
+                            <tr><td>Development</td><td>developmenthead@office.test</td><td>developmentofficer@office.test</td></tr>
+                            <tr><td>GN Coordination</td><td>gnhead@office.test</td><td>gnofficer@office.test</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
             <div class="text-muted">Password for development accounts: <code>password</code></div>
         </div>
     @endif

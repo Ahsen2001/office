@@ -14,6 +14,7 @@
             $isManagement ? ['label' => 'Management Dashboard', 'icon' => 'fa-chart-pie', 'route' => 'management.dashboard', 'active' => 'management.dashboard'] : null,
             $isReception ? ['label' => 'Reception Dashboard', 'icon' => 'fa-house-chimney-user', 'route' => 'reception.dashboard', 'active' => 'reception.dashboard'] : null,
             $isBranchHead ? ['label' => 'Branch Head Dashboard', 'icon' => 'fa-user-tie', 'route' => 'branch-head.dashboard', 'active' => 'branch-head.dashboard'] : null,
+            $isBranchHead ? ['label' => 'Branch Staff', 'icon' => 'fa-user-group', 'route' => 'branch-head.staff.index', 'active' => 'branch-head.staff.*'] : null,
             $isBranchStaff ? ['label' => 'Branch Staff Dashboard', 'icon' => 'fa-clipboard-check', 'route' => 'branch-staff.dashboard', 'active' => 'branch-staff.dashboard'] : null,
             ($isAdmin || $isReception) ? ['label' => 'People', 'icon' => 'fa-address-card', 'route' => 'staff.people.index', 'active' => 'staff.people.*'] : null,
             $canOperate ? ['label' => 'QR Scanner', 'icon' => 'fa-camera', 'route' => 'staff.scanner.index', 'active' => 'staff.scanner.*'] : null,

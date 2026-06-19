@@ -5,8 +5,8 @@
 
 @section('content')
     <div class="d-flex justify-content-between flex-wrap gap-2 mb-4">
-        <div><h1 class="h3 mb-1">{{ $appointment->appointment_no }}</h1><div class="text-muted">{{ $appointment->person?->full_name }} | {{ $appointment->department?->name }}</div></div>
-        <a href="{{ route('staff.appointments.edit', $appointment) }}" class="btn btn-outline-primary">Edit Appointment</a>
+        <div><h1 class="h3 mb-1">{{ $appointment->appointment_no }}</h1><div class="text-muted">{{ $appointment->person?->full_name }} | {{ $appointment->branch?->name }}</div></div>
+        @if($canEdit)<a href="{{ route('staff.appointments.edit', $appointment) }}" class="btn btn-outline-primary">Edit Appointment</a>@endif
     </div>
     <div class="row g-4">
         <div class="col-lg-8">
@@ -17,7 +17,7 @@
                     <div class="col-md-6"><div class="text-muted small">Appointment Date</div>{{ $appointment->appointment_date?->format('Y-m-d') }}</div>
                     <div class="col-md-6"><div class="text-muted small">Appointment Time</div>{{ $appointment->start_time?->format('H:i') }}{{ $appointment->end_time ? ' - '.$appointment->end_time->format('H:i') : '' }}</div>
                     <div class="col-md-6"><div class="text-muted small">Status</div><span class="badge text-bg-secondary">{{ ucfirst($appointment->status) }}</span></div>
-                    <div class="col-md-6"><div class="text-muted small">Assigned Officer</div>{{ $appointment->officer?->name ?? 'Unassigned' }}</div>
+                    <div class="col-md-6"><div class="text-muted small">Assigned Officer</div>{{ $appointment->officer?->name ?? 'Unassigned' }}@if($appointment->officer)<div class="small text-muted">{{ $appointment->officer->designation ?: $appointment->officer->roles->first()?->name }}</div>@endif</div>
                     <div class="col-12"><div class="text-muted small">Purpose</div>{{ $appointment->purpose ?: '-' }}</div>
                     <div class="col-12"><div class="text-muted small">Remarks</div>{{ $appointment->remarks ?: '-' }}</div>
                 </div>

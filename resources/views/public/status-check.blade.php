@@ -56,12 +56,6 @@
             <div class="row g-4">
                 @foreach($applications as $item)
                     @php
-                        $uploaded = $item->documents
-                            ->map(fn($document) => strtolower((string) ($document->documentType?->name ?? $document->document_title)))
-                            ->filter();
-                        $missing = collect($item->required_documents ?? [])
-                            ->reject(fn($document) => $uploaded->contains(strtolower(trim((string) $document))))
-                            ->values();
                         $appointment = $item->appointments
                             ->whereIn('status', ['scheduled', 'rescheduled'])
                             ->sortByDesc('appointment_date')
@@ -85,17 +79,22 @@
                                     <div class="col-md-6 col-xl-3"><div class="service-meta-label">Branch</div><div class="fw-semibold">{{ $item->branch?->name }}</div></div>
                                     <div class="col-md-6 col-xl-3"><div class="service-meta-label">Submitted date</div><div class="fw-semibold">{{ $item->submitted_at?->format('Y-m-d') ?? 'Not recorded' }}</div></div>
                                     <div class="col-md-6 col-xl-3"><div class="service-meta-label">Last updated</div><div class="fw-semibold">{{ $item->updated_at?->format('Y-m-d H:i') ?? 'Not recorded' }}</div></div>
-                                    <div class="col-md-6"><div class="service-meta-label">Missing documents</div><div class="fw-semibold">{{ $missing->isEmpty() ? 'None currently requested' : $missing->implode(', ') }}</div></div>
-                                    <div class="col-md-6"><div class="service-meta-label">Appointment</div><div class="fw-semibold">{{ $appointment ? $appointment->appointment_date?->format('Y-m-d').' at '.$appointment->start_time?->format('H:i') : 'No upcoming appointment' }}</div></div>
-                                    <div class="col-md-6">
-                                        <div class="service-meta-label">In-charge officer</div>
+                                    <div class="col-md-6 col-xl-3"><div class="service-meta-label">Appointment date</div><div class="fw-semibold">{{ $appointment ? $appointment->appointment_date?->format('Y-m-d').' at '.$appointment->start_time?->format('H:i') : 'No upcoming appointment' }}</div></div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="service-meta-label">In-charge officer name</div>
                                         <div class="fw-semibold">{{ $item->assignedOfficer?->name ?? 'Not assigned' }}</div>
-                                        <div class="small text-muted">{{ $item->assignedOfficer?->roles->first()?->name ?? 'Designation not recorded' }}</div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="service-meta-label">Officer contact</div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="service-meta-label">Officer designation</div>
+                                        <div class="fw-semibold">{{ $item->assignedOfficer?->designation ?: ($item->assignedOfficer?->roles->first()?->name ?? 'Not recorded') }}</div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="service-meta-label">Officer contact number</div>
                                         <div class="fw-semibold">{{ $item->assignedOfficer?->phone ?? $item->branch?->phone ?? 'Contact the branch office' }}</div>
-                                        <div class="small text-muted">{{ $item->branch?->name }}</div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="service-meta-label">Officer branch</div>
+                                        <div class="fw-semibold">{{ $item->branch?->name ?? 'Not assigned' }}</div>
                                     </div>
                                 </div>
                             </div>

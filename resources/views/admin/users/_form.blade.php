@@ -14,6 +14,10 @@
         <input id="phone" name="phone" value="{{ old('phone', $user->phone) }}" class="form-control">
     </div>
     <div class="col-md-6">
+        <label class="form-label" for="designation">Designation</label>
+        <input id="designation" name="designation" value="{{ old('designation', $user->designation) }}" class="form-control" placeholder="e.g. Accounts Officer">
+    </div>
+    <div class="col-md-6">
         <label class="form-label" for="branch_id">Branch</label>
         <select id="branch_id" name="branch_id" class="form-select">
             <option value="">No branch / all branches</option>

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\BranchHead\BranchStaffController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\Manager\ReportController;
@@ -104,6 +105,15 @@ Route::middleware(['auth', 'active', 'reception'])->prefix('reception')->name('r
 
 Route::middleware(['auth', 'active', 'branch.head'])->prefix('branch-head')->name('branch-head.')->group(function () {
     Route::get('/dashboard', [RoleDashboardController::class, 'branchHead'])->name('dashboard');
+    Route::get('/staff', [BranchStaffController::class, 'index'])->name('staff.index');
+    Route::get('/staff/create', [BranchStaffController::class, 'create'])->name('staff.create');
+    Route::post('/staff', [BranchStaffController::class, 'store'])->name('staff.store');
+    Route::get('/staff/{user}', [BranchStaffController::class, 'show'])->name('staff.show');
+    Route::get('/staff/{user}/edit', [BranchStaffController::class, 'edit'])->name('staff.edit');
+    Route::put('/staff/{user}', [BranchStaffController::class, 'update'])->name('staff.update');
+    Route::patch('/staff/{user}/activate', [BranchStaffController::class, 'activate'])->name('staff.activate');
+    Route::patch('/staff/{user}/deactivate', [BranchStaffController::class, 'deactivate'])->name('staff.deactivate');
+    Route::put('/staff/{user}/password', [BranchStaffController::class, 'resetPassword'])->name('staff.password');
 });
 
 Route::middleware(['auth', 'active', 'branch.staff'])->prefix('branch-staff')->name('branch-staff.')->group(function () {
@@ -151,6 +161,8 @@ Route::middleware(['auth', 'active', 'role:admin,reception,branch_head,branch_st
 
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/appointments/calendar', [AppointmentController::class, 'calendar'])->name('appointments.calendar');
+    Route::get('/branches/{branch}/appointment-number', [AppointmentController::class, 'generateAppointmentNumber'])->name('branches.appointment-number');
+    Route::get('/branches/{branch}/officers', [AppointmentController::class, 'getOfficersByBranch'])->name('branches.officers');
     Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
     Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.general.store');
     Route::get('/appointments/{appointment}', [AppointmentController::class, 'show'])->name('appointments.show');

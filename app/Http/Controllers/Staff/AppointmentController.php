@@ -8,23 +8,30 @@ use App\Models\Branch;
 use App\Models\Person;
 use App\Models\ServiceApplication;
 use App\Models\User;
+use App\Services\AppointmentNumberService;
 use App\Services\NotificationService;
 use App\Support\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AppointmentController extends Controller
 {
     public function index(Request $request): View
     {
-        $departmentId = $request->integer('branch_id') ?: null;
+        $branchId = $request->integer('branch_id') ?: null;
         $status = $request->string('status')->toString();
         $date = $request->date('date')?->format('Y-m-d');
 
-        $appointments = Appointment::with(['person', 'application', 'branch', 'officer'])
-            ->when($request->user()->isBranchRestricted(), fn ($query) => $query->where('branch_id', $request->user()->branch_id))
-            ->when($departmentId, fn ($query) => $query->where('branch_id', $departmentId))
+        $base = Appointment::query()
+            ->when($request->user()->isBranchRestricted(), fn ($query) => $query->where('branch_id', $request->user()->branch_id));
+
+        $appointments = (clone $base)
+            ->with(['person', 'application', 'branch', 'officer'])
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
             ->when($status, fn ($query) => $query->where('status', $status))
             ->when($date, fn ($query) => $query->whereDate('appointment_date', $date))
             ->orderBy('appointment_date')
@@ -34,11 +41,12 @@ class AppointmentController extends Controller
 
         return view('staff.appointments.index', [
             'appointments' => $appointments,
-            'departments' => Branch::visibleTo($request->user())->orderBy('name')->get(),
-            'departmentId' => $departmentId,
+            'branches' => Branch::visibleTo($request->user())->orderBy('name')->get(),
+            'branchId' => $branchId,
             'status' => $status,
             'date' => $date,
-            'todayAppointments' => Appointment::whereDate('appointment_date', today())->count(),
+            'todayAppointments' => (clone $base)->whereDate('appointment_date', today())->count(),
+            'canCreate' => $request->user()->hasRole('admin', 'reception'),
         ]);
     }
 
@@ -56,113 +64,170 @@ class AppointmentController extends Controller
             ->get()
             ->groupBy(fn (Appointment $appointment) => $appointment->appointment_date->format('Y-m-d'));
 
-        return view('staff.appointments.calendar', [
+        return view('staff.appointments.calendar', compact('month', 'start', 'end') + [
             'appointmentsByDate' => $appointments,
-            'month' => $month,
-            'start' => $start,
-            'end' => $end,
         ]);
     }
 
-    public function create(Request $request): View
+    public function create(Request $request, AppointmentNumberService $numbers): View
     {
-        $application = $request->integer('application_id') ? ServiceApplication::find($request->integer('application_id')) : null;
-        $person = $application?->person ?? ($request->integer('person_id') ? Person::find($request->integer('person_id')) : null);
+        $this->authorizeCreation($request);
 
-        return view('staff.appointments.create', $this->formData(new Appointment(), $application, $person));
+        $application = $request->integer('application_id')
+            ? ServiceApplication::with('person')->find($request->integer('application_id'))
+            : null;
+        $person = $application?->person
+            ?? ($request->integer('person_id') ? Person::find($request->integer('person_id')) : null);
+        $branch = $application?->branch;
+
+        return view('staff.appointments.create', $this->formData(
+            new Appointment,
+            $application,
+            $person,
+            $branch ? $numbers->next($branch) : null
+        ));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, AppointmentNumberService $numbers): RedirectResponse
     {
+        $this->authorizeCreation($request);
         $data = $this->validated($request);
-        $application = ServiceApplication::find($data['application_id'] ?? null);
 
-        $appointment = Appointment::create([
-            'appointment_no' => $this->generateAppointmentNumber(),
-            'application_id' => $application?->id,
-            'person_id' => $application?->person_id ?? $data['person_id'],
-            'department_id' => $application?->department_id ?? $data['department_id'],
-            'branch_id' => $application?->branch_id ?? $data['department_id'],
-            'officer_id' => $data['officer_id'] ?? null,
-            'created_by' => $request->user()->id,
-            'appointment_date' => $data['appointment_date'],
-            'start_time' => $data['start_time'],
-            'end_time' => $data['end_time'] ?? null,
-            'status' => $data['status'] ?? 'scheduled',
-            'purpose' => $data['purpose'] ?? null,
-            'remarks' => $data['remarks'] ?? null,
-        ]);
+        $appointment = DB::transaction(function () use ($request, $data, $numbers) {
+            $branch = Branch::query()->lockForUpdate()->findOrFail($data['branch_id']);
+            $application = $data['application_id']
+                ? ServiceApplication::findOrFail($data['application_id'])
+                : null;
 
-        if ($application) {
-            app(NotificationService::class)->assignedOfficer(
-                $application->loadMissing('assignedOfficer'),
-                'Appointment scheduled',
-                "{$appointment->appointment_no} was scheduled for {$appointment->appointment_date->format('Y-m-d')}.",
-                'appointment_scheduled'
-            );
-        }
+            $this->validateRelationships($data, $application);
 
-        AuditLogger::log('create', 'appointments', "Created appointment {$appointment->appointment_no}.", $appointment, null, $appointment->only(['appointment_no', 'person_id', 'application_id', 'department_id', 'appointment_date', 'start_time']), $request);
+            return Appointment::create([
+                'appointment_no' => $numbers->next($branch),
+                'application_id' => $application?->id,
+                'person_id' => $data['person_id'],
+                'department_id' => $application?->department_id,
+                'branch_id' => $branch->id,
+                'officer_id' => $data['officer_id'] ?? null,
+                'created_by' => $request->user()->id,
+                'appointment_date' => $data['appointment_date'],
+                'start_time' => $data['start_time'],
+                'end_time' => $data['end_time'] ?? null,
+                'status' => $data['status'],
+                'purpose' => $data['purpose'],
+                'remarks' => $data['remarks'] ?? null,
+            ]);
+        });
 
-        return redirect()->route('staff.appointments.show', $appointment)->with('success', 'Appointment booked successfully.');
+        $this->notifyAndAudit($appointment, $request);
+
+        return redirect()->route('staff.appointments.show', $appointment)
+            ->with('success', 'Appointment booked successfully.');
     }
 
-    public function storeForApplication(Request $request, ServiceApplication $application): RedirectResponse
-    {
-        $data = $this->validated($request);
-
-        $appointment = Appointment::create([
-            'appointment_no' => $this->generateAppointmentNumber(),
+    public function storeForApplication(
+        Request $request,
+        ServiceApplication $application,
+        AppointmentNumberService $numbers
+    ): RedirectResponse {
+        $request->merge([
             'application_id' => $application->id,
             'person_id' => $application->person_id,
-            'department_id' => $application->department_id,
             'branch_id' => $application->branch_id,
-            'officer_id' => $data['officer_id'] ?? null,
-            'created_by' => $request->user()->id,
-            'appointment_date' => $data['appointment_date'],
-            'start_time' => $data['start_time'],
-            'end_time' => $data['end_time'] ?? null,
-            'status' => $data['status'] ?? 'scheduled',
-            'purpose' => $data['purpose'] ?? null,
-            'remarks' => $data['remarks'] ?? null,
         ]);
 
-        app(NotificationService::class)->assignedOfficer(
-            $application->loadMissing('assignedOfficer'),
-            'Appointment scheduled',
-            "{$appointment->appointment_no} was scheduled for {$appointment->appointment_date->format('Y-m-d')}.",
-            'appointment_scheduled'
-        );
-
-        AuditLogger::log('create', 'appointments', "Created appointment {$appointment->appointment_no}.", $appointment, null, $appointment->only(['appointment_no', 'person_id', 'application_id', 'department_id', 'appointment_date', 'start_time']), $request);
-
-        return redirect()->route('staff.appointments.show', $appointment)->with('success', 'Appointment booked successfully.');
+        return $this->store($request, $numbers);
     }
 
-    public function show(Appointment $appointment): View
+    public function generateAppointmentNumber(
+        Request $request,
+        Branch $branch,
+        AppointmentNumberService $numbers
+    ): JsonResponse {
+        $this->authorizeCreation($request);
+        abort_unless($branch->is_active, 404);
+
+        return response()->json(['appointment_number' => $numbers->next($branch)]);
+    }
+
+    public function getOfficersByBranch(Request $request, Branch $branch): JsonResponse
     {
+        $this->authorizeCreation($request);
+
+        $officers = User::query()
+            ->where('branch_id', $branch->id)
+            ->where('is_active', true)
+            ->whereHas('roles', fn ($query) => $query->whereIn('slug', ['branch_head', 'branch_staff']))
+            ->with('roles:id,name,slug')
+            ->orderByRaw("CASE WHEN EXISTS (
+                SELECT 1 FROM role_user
+                INNER JOIN roles ON roles.id = role_user.role_id
+                WHERE role_user.user_id = users.id AND roles.slug = 'branch_head'
+            ) THEN 0 ELSE 1 END")
+            ->orderBy('name')
+            ->get()
+            ->map(fn (User $officer) => [
+                'id' => $officer->id,
+                'name' => $officer->name,
+                'designation' => $officer->designation ?: $officer->roles->first()?->name,
+                'label' => $officer->name.' - '.($officer->designation ?: $officer->roles->first()?->name ?: 'Officer'),
+            ]);
+
+        return response()->json(['officers' => $officers]);
+    }
+
+    public function show(Request $request, Appointment $appointment): View
+    {
+        $this->authorizeBranch($request, $appointment);
+
         return view('staff.appointments.show', [
-            'appointment' => $appointment->load(['person', 'application.service', 'branch', 'officer', 'creator']),
+            'appointment' => $appointment->load(['person', 'application.service', 'branch', 'officer.roles', 'creator']),
+            'canEdit' => $request->user()->hasRole('admin', 'reception'),
         ]);
     }
 
-    public function edit(Appointment $appointment): View
+    public function edit(Request $request, Appointment $appointment, AppointmentNumberService $numbers): View
     {
-        return view('staff.appointments.edit', $this->formData($appointment, $appointment->application, $appointment->person));
+        abort_unless($request->user()->hasRole('admin', 'reception'), 403);
+
+        return view('staff.appointments.edit', $this->formData(
+            $appointment,
+            $appointment->application,
+            $appointment->person,
+            $appointment->appointment_no
+        ));
     }
 
     public function update(Request $request, Appointment $appointment): RedirectResponse
     {
-        $appointment->update($this->validated($request, $appointment));
+        abort_unless($request->user()->hasRole('admin', 'reception'), 403);
+        $data = $this->validated($request, $appointment);
+        $application = $data['application_id'] ? ServiceApplication::findOrFail($data['application_id']) : null;
+        $this->validateRelationships($data, $application);
 
-        return redirect()->route('staff.appointments.show', $appointment)->with('success', 'Appointment updated successfully.');
+        $appointment->update([
+            'application_id' => $application?->id,
+            'person_id' => $data['person_id'],
+            'department_id' => $application?->department_id,
+            'branch_id' => $data['branch_id'],
+            'officer_id' => $data['officer_id'] ?? null,
+            'appointment_date' => $data['appointment_date'],
+            'start_time' => $data['start_time'],
+            'end_time' => $data['end_time'] ?? null,
+            'status' => $data['status'],
+            'purpose' => $data['purpose'],
+            'remarks' => $data['remarks'] ?? null,
+        ]);
+
+        return redirect()->route('staff.appointments.show', $appointment)
+            ->with('success', 'Appointment updated successfully.');
     }
 
     public function updateStatus(Request $request, Appointment $appointment): RedirectResponse
     {
+        $this->authorizeBranch($request, $appointment);
         $data = $request->validate([
             'status' => ['required', 'in:scheduled,completed,cancelled,missed,rescheduled'],
-            'remarks' => ['nullable', 'string'],
+            'remarks' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $appointment->update([
@@ -175,11 +240,12 @@ class AppointmentController extends Controller
 
     public function reschedule(Request $request, Appointment $appointment): RedirectResponse
     {
+        $this->authorizeBranch($request, $appointment);
         $data = $request->validate([
             'appointment_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
-            'remarks' => ['nullable', 'string'],
+            'remarks' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $appointment->update($data + ['status' => 'rescheduled']);
@@ -189,7 +255,8 @@ class AppointmentController extends Controller
 
     public function cancel(Request $request, Appointment $appointment): RedirectResponse
     {
-        $data = $request->validate(['remarks' => ['nullable', 'string']]);
+        $this->authorizeBranch($request, $appointment);
+        $data = $request->validate(['remarks' => ['nullable', 'string', 'max:5000']]);
 
         $appointment->update([
             'status' => 'cancelled',
@@ -202,42 +269,112 @@ class AppointmentController extends Controller
     private function validated(Request $request, ?Appointment $appointment = null): array
     {
         return $request->validate([
-            'person_id' => ['required_without:application_id', 'nullable', 'exists:people,id'],
+            'person_id' => ['required', 'exists:people,id'],
             'application_id' => ['nullable', 'exists:service_applications,id'],
-            'department_id' => ['required_without:application_id', 'nullable', 'exists:branches,id'],
+            'branch_id' => ['required', 'exists:branches,id'],
             'officer_id' => ['nullable', 'exists:users,id'],
-            'appointment_date' => ['required', 'date'],
+            'appointment_date' => ['required', 'date', $appointment ? 'after_or_equal:today' : 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
-            'status' => ['nullable', 'in:scheduled,completed,cancelled,missed,rescheduled'],
-            'purpose' => ['nullable', 'string', 'max:500'],
-            'remarks' => ['nullable', 'string'],
+            'status' => ['required', 'in:scheduled,completed,cancelled,missed,rescheduled'],
+            'purpose' => ['required', 'string', 'max:500'],
+            'remarks' => ['nullable', 'string', 'max:5000'],
         ]);
     }
 
-    private function formData(Appointment $appointment, ?ServiceApplication $application = null, ?Person $person = null): array
+    private function validateRelationships(array $data, ?ServiceApplication $application): void
     {
+        if ($application && (
+            (int) $application->person_id !== (int) $data['person_id']
+            || (int) $application->branch_id !== (int) $data['branch_id']
+        )) {
+            throw ValidationException::withMessages([
+                'application_id' => 'The selected application must belong to the selected person and branch.',
+            ]);
+        }
+
+        if (! empty($data['officer_id'])) {
+            $validOfficer = User::whereKey($data['officer_id'])
+                ->where('branch_id', $data['branch_id'])
+                ->where('is_active', true)
+                ->whereHas('roles', fn ($query) => $query->whereIn('slug', ['branch_head', 'branch_staff']))
+                ->exists();
+
+            if (! $validOfficer) {
+                throw ValidationException::withMessages([
+                    'officer_id' => 'The selected officer must be active and belong to the selected branch.',
+                ]);
+            }
+        }
+    }
+
+    private function formData(
+        Appointment $appointment,
+        ?ServiceApplication $application = null,
+        ?Person $person = null,
+        ?string $appointmentNumber = null
+    ): array {
+        $selectedBranchId = old('branch_id', $application?->branch_id ?? $appointment->branch_id);
+
         return [
             'appointment' => $appointment,
             'application' => $application,
             'person' => $person,
-            'people' => Person::orderBy('full_name')->limit(200)->get(),
-            'applications' => ServiceApplication::with('person')->latest()->limit(200)->get(),
-            'departments' => Branch::visibleTo(auth()->user())->where('is_active', true)->orderBy('name')->get(),
-            'officers' => User::where('is_active', true)->whereHas('roles', fn ($query) => $query->whereIn('slug', ['branch_head', 'branch_staff']))->orderBy('name')->get(),
+            'appointmentNumber' => $appointmentNumber,
+            'people' => Person::orderBy('full_name')->limit(300)->get(),
+            'applications' => ServiceApplication::with(['person', 'branch'])->latest()->limit(300)->get(),
+            'branches' => Branch::where('is_active', true)->orderBy('name')->get(),
+            'officers' => $selectedBranchId ? $this->officerQuery((int) $selectedBranchId)->get() : collect(),
         ];
     }
 
-    private function generateAppointmentNumber(): string
+    private function officerQuery(int $branchId)
     {
-        $prefix = 'APT-'.now()->format('Y').'-';
-        $next = Appointment::withTrashed()->where('appointment_no', 'like', $prefix.'%')->count() + 1;
+        return User::where('branch_id', $branchId)
+            ->where('is_active', true)
+            ->whereHas('roles', fn ($query) => $query->whereIn('slug', ['branch_head', 'branch_staff']))
+            ->with('roles:id,name,slug')
+            ->orderBy('name');
+    }
 
-        do {
-            $number = $prefix.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
-            $next++;
-        } while (Appointment::withTrashed()->where('appointment_no', $number)->exists());
+    private function authorizeCreation(Request $request): void
+    {
+        abort_unless($request->user()?->hasRole('admin', 'reception'), 403);
+    }
 
-        return $number;
+    private function authorizeBranch(Request $request, Appointment $appointment): void
+    {
+        $user = $request->user();
+        abort_unless($user, 403);
+
+        if (! $user->isBranchRestricted()) {
+            return;
+        }
+
+        abort_unless((int) $appointment->branch_id === (int) $user->branch_id, 403);
+    }
+
+    private function notifyAndAudit(Appointment $appointment, Request $request): void
+    {
+        $appointment->loadMissing('application.assignedOfficer');
+
+        if ($appointment->application) {
+            app(NotificationService::class)->assignedOfficer(
+                $appointment->application,
+                'Appointment scheduled',
+                "{$appointment->appointment_no} was scheduled for {$appointment->appointment_date->format('Y-m-d')}.",
+                'appointment_scheduled'
+            );
+        }
+
+        AuditLogger::log(
+            'create',
+            'appointments',
+            "Created appointment {$appointment->appointment_no}.",
+            $appointment,
+            null,
+            $appointment->only(['appointment_no', 'person_id', 'application_id', 'branch_id', 'officer_id', 'appointment_date', 'start_time']),
+            $request
+        );
     }
 }

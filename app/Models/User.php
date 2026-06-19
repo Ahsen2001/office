@@ -21,9 +21,11 @@ class User extends Authenticatable
     protected $fillable = [
         'department_id',
         'branch_id',
+        'created_by',
         'name',
         'email',
         'phone',
+        'designation',
         'password',
         'is_active',
     ];
@@ -70,6 +72,16 @@ class User extends Authenticatable
     public function assignedApplications()
     {
         return $this->hasMany(ServiceApplication::class, 'assigned_officer_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function createdUsers()
+    {
+        return $this->hasMany(User::class, 'created_by');
     }
 
     public function hasRole(string ...$roles): bool
