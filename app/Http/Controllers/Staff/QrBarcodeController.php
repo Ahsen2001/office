@@ -51,16 +51,16 @@ class QrBarcodeController extends Controller
         return redirect()->route('staff.people.show', $person);
     }
 
-    public function downloadQr(Person $person): StreamedResponse
+    public function downloadQr(Person $person, CodeGeneratorService $codes): StreamedResponse
     {
-        abort_unless($person->qr_code_path && Storage::disk('public')->exists($person->qr_code_path), 404);
+        $this->ensureCodeAssets($person, $codes);
 
         return Storage::disk('public')->download($person->qr_code_path, $person->person_code.'-qr.svg');
     }
 
-    public function viewQr(Person $person): BinaryFileResponse
+    public function viewQr(Person $person, CodeGeneratorService $codes): BinaryFileResponse
     {
-        abort_unless($person->qr_code_path && Storage::disk('public')->exists($person->qr_code_path), 404);
+        $this->ensureCodeAssets($person, $codes);
 
         return response()->file(Storage::disk('public')->path($person->qr_code_path), [
             'Content-Type' => 'image/svg+xml',
@@ -68,16 +68,16 @@ class QrBarcodeController extends Controller
         ]);
     }
 
-    public function downloadBarcode(Person $person): StreamedResponse
+    public function downloadBarcode(Person $person, CodeGeneratorService $codes): StreamedResponse
     {
-        abort_unless($person->barcode_path && Storage::disk('public')->exists($person->barcode_path), 404);
+        $this->ensureCodeAssets($person, $codes);
 
         return Storage::disk('public')->download($person->barcode_path, $person->person_code.'-barcode.svg');
     }
 
-    public function viewBarcode(Person $person): BinaryFileResponse
+    public function viewBarcode(Person $person, CodeGeneratorService $codes): BinaryFileResponse
     {
-        abort_unless($person->barcode_path && Storage::disk('public')->exists($person->barcode_path), 404);
+        $this->ensureCodeAssets($person, $codes);
 
         return response()->file(Storage::disk('public')->path($person->barcode_path), [
             'Content-Type' => 'image/svg+xml',
@@ -100,6 +100,18 @@ class QrBarcodeController extends Controller
             ->orWhere('qr_code_value', $code)
             ->orWhere('barcode_value', $code)
             ->first();
+    }
+
+    private function ensureCodeAssets(Person $person, CodeGeneratorService $codes): void
+    {
+        $disk = Storage::disk('public');
+        $qrMissing = ! $person->qr_code_path || ! $disk->exists($person->qr_code_path);
+        $barcodeMissing = ! $person->barcode_path || ! $disk->exists($person->barcode_path);
+
+        if ($qrMissing || $barcodeMissing) {
+            $person->update($codes->generateForPerson($person));
+            $person->refresh();
+        }
     }
 
     private function normalizeCode(string $code): string

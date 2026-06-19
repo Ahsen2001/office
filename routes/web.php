@@ -128,6 +128,7 @@ Route::middleware(['auth', 'active', 'role:admin,reception,branch_head,branch_st
     Route::put('/people/{person}', [PersonController::class, 'update'])->name('people.update');
     Route::get('/people/{person}/card', [PersonController::class, 'card'])->name('people.card');
     Route::get('/people/{person}/report', [PersonController::class, 'report'])->name('people.report');
+    Route::get('/people/{person}/photo', [PersonController::class, 'photo'])->name('people.photo');
     Route::get('/people/{person}/qr/download', [QrBarcodeController::class, 'downloadQr'])->name('people.qr.download');
     Route::get('/people/{person}/qr', [QrBarcodeController::class, 'viewQr'])->name('people.qr.view');
     Route::get('/people/{person}/barcode/download', [QrBarcodeController::class, 'downloadBarcode'])->name('people.barcode.download');

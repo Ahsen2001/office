@@ -22,8 +22,8 @@
     <div class="profile-hero p-4 mb-4">
         <div class="row g-4 align-items-center">
             <div class="col-md-auto text-center">
-                @if($person->photo_path)
-                    <img src="{{ Storage::url($person->photo_path) }}" class="rounded-circle object-fit-cover border border-3 border-white" style="width: 130px; height: 130px;" alt="{{ $person->full_name }}">
+                @if($person->photo_path && Storage::disk('public')->exists($person->photo_path))
+                    <img src="{{ route('staff.people.photo', $person) }}" class="rounded-circle object-fit-cover border border-3 border-white" style="width: 130px; height: 130px;" alt="{{ $person->full_name }}">
                 @else
                     <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center" style="width: 130px; height: 130px;"><i class="fa-solid fa-user fs-1"></i></div>
                 @endif

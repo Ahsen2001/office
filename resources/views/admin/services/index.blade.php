@@ -34,7 +34,7 @@
                         <th>Fee</th>
                         <th>Processing</th>
                         <th>Status</th>
-                        <th class="text-end">Actions</th>
+                        @if(auth()->user()->hasRole('admin'))<th class="text-end">Actions</th>@endif
                     </tr>
                 </thead>
                 <tbody>
@@ -52,19 +52,19 @@
                                     {{ $service->is_active ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
-                            <td class="text-end">
-                                @if(auth()->user()->hasRole('admin'))
+                            @if(auth()->user()->hasRole('admin'))
+                            <td class="text-end text-nowrap">
                                 <a href="{{ route('admin.services.edit', $service) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                                 <form method="POST" action="{{ route('admin.services.destroy', $service) }}" class="d-inline" onsubmit="return confirm('Delete this service?')">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                                 </form>
-                                @endif
                             </td>
+                            @endif
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">No services found.</td></tr>
+                        <tr><td colspan="{{ auth()->user()->hasRole('admin') ? 6 : 5 }}" class="text-center text-muted py-4">No services found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

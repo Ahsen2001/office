@@ -29,7 +29,7 @@
         }
 
         .auth-panel {
-            max-width: 1080px;
+            max-width: 960px;
             width: 100%;
             background: #fff;
             border: 1px solid var(--office-line);
@@ -43,7 +43,7 @@
             background-position: center;
             background-size: cover;
             color: #fff;
-            min-height: 560px;
+            min-height: 500px;
             position: relative;
         }
 
@@ -72,7 +72,7 @@
 
         .auth-card {
             width: 100%;
-            max-width: 460px;
+            max-width: 410px;
             border: 0;
         }
 

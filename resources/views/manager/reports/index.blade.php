@@ -22,7 +22,11 @@
             <h1 class="h3 mb-1">Operational reports</h1>
             <p class="text-muted mb-0">Scope: <strong>{{ $scopeLabel }}</strong>. Filters apply to cards, charts, tables, and exports.</p>
         </div>
-        <button type="button" onclick="window.print()" class="btn btn-success no-print"><i class="fa-solid fa-print me-1"></i> Print dashboard</button>
+        <div class="ms-xl-auto align-self-xl-center no-print">
+            <button type="button" id="print-report" class="btn btn-success d-inline-flex align-items-center justify-content-center">
+                <i class="fa-solid fa-print me-2"></i>Print dashboard
+            </button>
+        </div>
     </div>
 
     <form method="GET" class="card soft-card mb-4 report-filters">
@@ -164,6 +168,10 @@
 
 @push('scripts')
 <script>
+    document.getElementById('print-report')?.addEventListener('click', () => {
+        window.print();
+    });
+
     const reportChartDefaults = {
         responsive: true,
         maintainAspectRatio: false,

@@ -56,6 +56,7 @@
     <div class="col-md-4">
         <label class="form-label" for="profile_photo">Profile photo</label>
         <input id="profile_photo" type="file" name="profile_photo" accept="image/*" class="form-control">
+        <div class="form-text">JPG, PNG, or WebP. Maximum size: 10 MB.</div>
     </div>
     <div class="col-12">
         <label class="form-label" for="notes">Notes</label>

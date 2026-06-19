@@ -46,8 +46,8 @@
             <div class="p-4">
                 <div class="row g-4 align-items-center">
                     <div class="col-md-3 text-center">
-                        @if($person->photo_path)
-                            <img src="{{ Storage::url($person->photo_path) }}" alt="{{ $person->full_name }}" class="rounded object-fit-cover" style="width: 140px; height: 160px;">
+                        @if($person->photo_path && Storage::disk('public')->exists($person->photo_path))
+                            <img src="{{ route('staff.people.photo', $person) }}" alt="{{ $person->full_name }}" class="rounded object-fit-cover" style="width: 140px; height: 160px;">
                         @else
                             <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto" style="width: 140px; height: 160px;"><i class="fa-solid fa-user fs-1 text-muted"></i></div>
                         @endif
@@ -62,10 +62,10 @@
                     </div>
                     <div class="col-md-4 text-center">
                         @if($person->qr_code_path)
-                            <img src="{{ Storage::url($person->qr_code_path) }}" alt="QR code" class="img-fluid" style="max-width: 170px;">
+                            <img src="{{ route('staff.people.qr.view', $person) }}" alt="QR code" class="img-fluid" style="max-width: 170px;">
                         @endif
                         @if($person->barcode_path)
-                            <img src="{{ Storage::url($person->barcode_path) }}" alt="Barcode" class="img-fluid mt-2">
+                            <img src="{{ route('staff.people.barcode.view', $person) }}" alt="Barcode" class="img-fluid mt-2">
                         @endif
                     </div>
                 </div>

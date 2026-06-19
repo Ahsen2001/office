@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PersonController extends Controller
 {
@@ -121,11 +122,23 @@ class PersonController extends Controller
         return redirect()->route('staff.people.index')->with('success', 'Person deleted successfully.');
     }
 
-    public function card(Person $person): View
+    public function card(Person $person, CodeGeneratorService $codes): View
     {
         $this->authorizePerson($person);
+        $this->ensureCodes($person, $codes);
 
         return view('staff.people.card', compact('person'));
+    }
+
+    public function photo(Person $person): BinaryFileResponse
+    {
+        $this->authorizePerson($person);
+        abort_unless($person->photo_path && Storage::disk('public')->exists($person->photo_path), 404);
+
+        return response()->file(Storage::disk('public')->path($person->photo_path), [
+            'Content-Disposition' => 'inline',
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
     }
 
     public function report(Person $person)
@@ -153,7 +166,7 @@ class PersonController extends Controller
             'emergency_contact_name' => ['nullable', 'string', 'max:150'],
             'emergency_contact_number' => ['nullable', 'string', 'max:30'],
             'notes' => ['nullable', 'string'],
-            'profile_photo' => ['nullable', 'image', 'max:2048'],
+            'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
         ]);
 
         $nameParts = preg_split('/\s+/', trim($data['full_name']), 2);
