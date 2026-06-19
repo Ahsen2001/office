@@ -11,7 +11,8 @@ class NotificationController extends Controller
 {
     public function index(Request $request): View
     {
-        $notifications = OfficeNotification::with(['person', 'application'])
+        $notifications = OfficeNotification::query()
+            ->with(['person', 'application'])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->paginate(15);
@@ -33,7 +34,8 @@ class NotificationController extends Controller
 
     public function markAllRead(Request $request): RedirectResponse
     {
-        OfficeNotification::where('user_id', $request->user()->id)
+        OfficeNotification::query()
+            ->where('user_id', $request->user()->id)
             ->where('is_read', false)
             ->update([
                 'is_read' => true,

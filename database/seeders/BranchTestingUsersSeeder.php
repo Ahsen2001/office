@@ -15,9 +15,6 @@ class BranchTestingUsersSeeder extends Seeder
         $branchHeadRole = Role::where('slug', 'branch_head')->firstOrFail();
         $branchStaffRole = Role::where('slug', 'branch_staff')->firstOrFail();
 
-        User::where('email', 'branchhead@office.test')->update(['designation' => 'Branch Head']);
-        User::where('email', 'officer@office.test')->update(['designation' => 'Registration Officer']);
-
         $accounts = [
             'ADMIN' => ['Administration', 'adminhead@office.test', 'adminofficer@office.test'],
             'ACC' => ['Accounts', 'accountshead@office.test', 'accountsofficer@office.test'],

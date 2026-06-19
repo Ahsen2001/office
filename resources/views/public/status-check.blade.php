@@ -86,7 +86,7 @@
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="service-meta-label">Officer designation</div>
-                                        <div class="fw-semibold">{{ $item->assignedOfficer?->designation ?: ($item->assignedOfficer?->roles->first()?->name ?? 'Not recorded') }}</div>
+                                        <div class="fw-semibold">{{ $item->assignedOfficer?->roles->first()?->name ?? 'Not recorded' }}</div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="service-meta-label">Officer contact number</div>

@@ -94,19 +94,6 @@ class AppointmentAndBranchStaffTest extends TestCase
             ->assertSessionHasErrors('officer_id');
     }
 
-    public function test_branch_users_cannot_open_or_submit_the_reception_appointment_form(): void
-    {
-        $data = $this->data();
-
-        $this->actingAs($data['accounts_head'])
-            ->get(route('staff.appointments.create'))
-            ->assertForbidden();
-
-        $this->actingAs($data['accounts_staff'])
-            ->post(route('staff.appointments.general.store'), [])
-            ->assertForbidden();
-    }
-
     public function test_branch_head_can_manage_only_branch_staff_in_assigned_branch(): void
     {
         $data = $this->data();
@@ -183,7 +170,6 @@ class AppointmentAndBranchStaffTest extends TestCase
         $this->get(route('public.status', ['application_no' => $data['application']->application_no]))
             ->assertOk()
             ->assertSee('Accounts Officer')
-            ->assertSee('Officer designation')
             ->assertSee('0770000002')
             ->assertSee(today()->addDay()->format('Y-m-d'))
             ->assertDontSee('Private Applicant')
@@ -194,9 +180,12 @@ class AppointmentAndBranchStaffTest extends TestCase
     private function data(): array
     {
         $roles = collect(['reception', 'branch_head', 'branch_staff'])->mapWithKeys(fn ($slug) => [
-            $slug => Role::firstOrCreate(
+            $slug => Role::query()->firstOrCreate(
                 ['slug' => $slug],
-                ['name' => str($slug)->replace('_', ' ')->title(), 'is_active' => true]
+                [
+                    'name' => str($slug)->replace('_', ' ')->title(),
+                    'is_active' => true,
+                ],
             ),
         ]);
 

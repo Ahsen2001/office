@@ -56,9 +56,9 @@ class NoteController extends Controller
         return back()->with('success', 'Note added successfully.');
     }
 
-    public function edit(ApplicationNote $note): View
+    public function edit(Request $request, ApplicationNote $note): View
     {
-        abort_unless(auth()->id() === (int) $note->created_by, 403);
+        abort_unless((int) $request->user()->id === (int) $note->created_by, 403);
 
         return view('staff.notes.edit', compact('note'));
     }
@@ -72,9 +72,9 @@ class NoteController extends Controller
         return redirect()->route('staff.notes.index')->with('success', 'Note updated successfully.');
     }
 
-    public function destroy(ApplicationNote $note): RedirectResponse
+    public function destroy(Request $request, ApplicationNote $note): RedirectResponse
     {
-        abort_unless(auth()->user()?->hasRole('admin'), 403);
+        abort_unless($request->user()->hasRole('admin'), 403);
 
         $note->delete();
 

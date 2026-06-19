@@ -19,9 +19,9 @@ class SearchController extends Controller
 
         return view('search.index', [
             'filters' => $filters,
-            'departments' => Branch::visibleTo($request->user())->orderBy('name')->get(),
-            'statuses' => ApplicationStatus::orderBy('sort_order')->get(),
-            'services' => Service::orderBy('name')->get(),
+            'departments' => Branch::query()->visibleTo($request->user())->orderBy('name')->get(),
+            'statuses' => ApplicationStatus::query()->orderBy('sort_order')->get(),
+            'services' => Service::query()->orderBy('name')->get(),
             'people' => $this->peopleQuery($filters)->paginate(10, ['*'], 'people_page')->withQueryString(),
             'applications' => $this->applicationsQuery($filters)->paginate(10, ['*'], 'applications_page')->withQueryString(),
         ]);
@@ -93,7 +93,8 @@ class SearchController extends Controller
     {
         $term = $filters['q'];
 
-        return ServiceApplication::with(['person', 'branch', 'service', 'status'])
+        return ServiceApplication::query()
+            ->with(['person', 'branch', 'service', 'status'])
             ->visibleTo(auth()->user())
             ->when($term, fn ($query) => $query->where(function ($query) use ($term) {
                 $query->where('application_no', 'like', "%{$term}%")

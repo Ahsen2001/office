@@ -28,7 +28,7 @@ class PublicApplicationStatusController extends Controller
                 ->with([
                     'service:id,name',
                     'branch:id,name,phone',
-                    'assignedOfficer:id,name,phone,designation,branch_id',
+                    'assignedOfficer:id,name,phone,branch_id',
                     'assignedOfficer.roles:id,name',
                     'status:id,code,name',
                     'appointments' => fn ($query) => $query

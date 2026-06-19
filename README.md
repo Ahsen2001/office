@@ -130,24 +130,6 @@ Development credentials are displayed on the login page only when `APP_ENV=local
 
 Camera scanning requires HTTPS in production.
 
-## Appointment Workflow
-
-Reception Staff create appointments for registered people and may link them to a service application. Selecting a branch loads its active Branch Head and Branch Staff through AJAX and previews the next branch-specific number.
-
-Appointment numbers use:
-
-```text
-BRANCHCODE-APT-YEAR-SERIAL
-ACC-APT-2026-0001
-LAND-APT-2026-0001
-```
-
-Each branch and year has an independent serial sequence. The server reserves and revalidates the final number when saving.
-
-## Branch Staff Management
-
-Branch Heads can create, view, edit, activate, deactivate, and reset passwords for Branch Staff in their own branch. The role and branch are fixed server-side; Branch Heads cannot create privileged roles, move staff to another branch, permanently delete users, or access another branch’s staff profiles.
-
 ## Public Status Checking
 
 The public `/status-check` page accepts:

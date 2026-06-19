@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ApplicationStatus;
 use App\Models\Branch;
 use App\Models\Person;
 use App\Models\ServiceApplication;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class RoleDashboardController extends Controller
@@ -31,10 +29,10 @@ class RoleDashboardController extends Controller
 
         return view('dashboards.management', [
             'branches' => $branches,
-            'pendingCount' => ServiceApplication::whereHas('status', fn ($query) => $query->whereIn('code', $pendingCodes))->count(),
-            'completedCount' => ServiceApplication::whereHas('status', fn ($query) => $query->where('code', 'completed'))->count(),
-            'delayedCount' => ServiceApplication::whereDate('due_date', '<', today())->whereHas('status', fn ($query) => $query->whereIn('code', $pendingCodes))->count(),
-            'officerWorkload' => User::whereHas('roles', fn ($query) => $query->whereIn('slug', ['branch_head', 'branch_staff']))
+            'pendingCount' => ServiceApplication::query()->whereHas('status', fn ($query) => $query->whereIn('code', $pendingCodes))->count(),
+            'completedCount' => ServiceApplication::query()->whereHas('status', fn ($query) => $query->where('code', 'completed'))->count(),
+            'delayedCount' => ServiceApplication::query()->whereDate('due_date', '<', today())->whereHas('status', fn ($query) => $query->whereIn('code', $pendingCodes))->count(),
+            'officerWorkload' => User::query()->whereHas('roles', fn ($query) => $query->whereIn('slug', ['branch_head', 'branch_staff']))
                 ->withCount(['assignedApplications as workload'])->orderByDesc('workload')->limit(10)->get(),
             'monthlyApplications' => $monthly,
         ]);
@@ -43,10 +41,10 @@ class RoleDashboardController extends Controller
     public function reception(): View
     {
         return view('dashboards.reception', [
-            'todayPeople' => Person::whereDate('registered_at', today())->count(),
-            'todayApplications' => ServiceApplication::whereDate('submitted_at', today())->count(),
-            'recentPeople' => Person::latest('registered_at')->limit(8)->get(),
-            'recentApplications' => ServiceApplication::with(['person', 'branch', 'status'])->latest('submitted_at')->limit(8)->get(),
+            'todayPeople' => Person::query()->whereDate('registered_at', today())->count(),
+            'todayApplications' => ServiceApplication::query()->whereDate('submitted_at', today())->count(),
+            'recentPeople' => Person::query()->latest('registered_at')->limit(8)->get(),
+            'recentApplications' => ServiceApplication::query()->with(['person', 'branch', 'status'])->latest('submitted_at')->limit(8)->get(),
         ]);
     }
 
@@ -62,8 +60,8 @@ class RoleDashboardController extends Controller
 
     private function branchDashboard(Request $request, bool $head): View
     {
-        $branch = Branch::findOrFail($request->user()->branch_id);
-        $base = ServiceApplication::where('branch_id', $branch->id);
+        $branch = Branch::query()->findOrFail($request->user()->branch_id);
+        $base = ServiceApplication::query()->where('branch_id', $branch->id);
         $assigned = $head ? clone $base : (clone $base)->where('assigned_officer_id', $request->user()->id);
 
         return view($head ? 'dashboards.branch-head' : 'dashboards.branch-staff', [
@@ -75,7 +73,7 @@ class RoleDashboardController extends Controller
             'rejectedCount' => (clone $base)->whereHas('status', fn ($query) => $query->where('code', 'rejected'))->count(),
             'waitingDocumentsCount' => (clone $assigned)->whereHas('status', fn ($query) => $query->where('code', 'waiting_for_documents'))->count(),
             'recentApplications' => (clone $assigned)->with(['person', 'service', 'status', 'assignedOfficer'])->latest()->limit(10)->get(),
-            'staffPerformance' => $head ? User::where('branch_id', $branch->id)
+            'staffPerformance' => $head ? User::query()->where('branch_id', $branch->id)
                 ->whereHas('roles', fn ($query) => $query->where('slug', 'branch_staff'))
                 ->withCount(['assignedApplications as workload', 'assignedApplications as completed_workload' => fn ($query) => $query->whereHas('status', fn ($status) => $status->where('code', 'completed'))])
                 ->orderBy('name')->get() : collect(),
