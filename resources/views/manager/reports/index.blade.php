@@ -24,8 +24,7 @@
         </div>
         <div class="ms-xl-auto align-self-xl-center no-print">
             <button type="button" id="print-report" class="btn btn-success d-inline-flex align-items-center justify-content-center" data-print-page aria-label="Print reports dashboard">
-                <i class="fa-solid fa-print me-2"></i>Print dashboard
-            </button>
+                <i class="fa-solid fa-print me-2"></i>Print dashboard </button>
         </div>
     </div>
 
