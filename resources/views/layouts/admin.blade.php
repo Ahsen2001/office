@@ -30,6 +30,22 @@
         document.querySelectorAll('[data-sidebar-toggle]').forEach((button) => {
             button.addEventListener('click', () => document.querySelector('.admin-sidebar').classList.toggle('show'));
         });
+
+        document.addEventListener('click', (event) => {
+            const printButton = event.target.closest('[data-print-page]');
+
+            if (!printButton) {
+                return;
+            }
+
+            event.preventDefault();
+
+            if (printButton.disabled) {
+                return;
+            }
+
+            window.print();
+        });
     </script>
     @stack('scripts')
 </body>

@@ -59,7 +59,7 @@
         <a href="#documents" class="btn btn-outline-secondary"><i class="fa-solid fa-upload me-1"></i>Upload Document</a>
         <a href="#notes" class="btn btn-outline-secondary"><i class="fa-solid fa-note-sticky me-1"></i>Add Note</a>
         <a href="{{ route('staff.appointments.create', ['person_id' => $person->id]) }}" class="btn btn-outline-secondary"><i class="fa-solid fa-calendar-plus me-1"></i>Book Appointment</a>
-        <button onclick="window.print()" class="btn btn-outline-success"><i class="fa-solid fa-print me-1"></i>Print Profile</button>
+        <button type="button" class="btn btn-outline-success" data-print-page aria-label="Print person profile"><i class="fa-solid fa-print me-1"></i>Print Profile</button>
         <a href="{{ route('staff.people.report', $person) }}" class="btn btn-outline-dark"><i class="fa-solid fa-file-arrow-down me-1"></i>Download Report</a>
     </div>
 

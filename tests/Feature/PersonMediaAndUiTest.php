@@ -106,8 +106,24 @@ class PersonMediaAndUiTest extends TestCase
             ->get(route('reports.index'))
             ->assertOk()
             ->assertSee('id="print-report"', false)
+            ->assertSee('data-print-page', false)
             ->assertSee('window.print();', false)
             ->assertSee(asset('css/office.css'), false);
+    }
+
+    public function test_person_card_uses_shared_print_control(): void
+    {
+        Storage::fake('public');
+        $person = $this->person();
+
+        $this->actingAs($this->userWithRole('admin'))
+            ->get(route('staff.people.card', $person))
+            ->assertOk()
+            ->assertSee('Print Card')
+            ->assertSee('data-print-page', false)
+            ->assertSee('window.print();', false)
+            ->assertSee(route('staff.people.qr.view', $person), false)
+            ->assertSee(route('staff.people.barcode.view', $person), false);
     }
 
     private function userWithRole(string $slug): User

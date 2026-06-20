@@ -23,7 +23,7 @@
             <p class="text-muted mb-0">Scope: <strong>{{ $scopeLabel }}</strong>. Filters apply to cards, charts, tables, and exports.</p>
         </div>
         <div class="ms-xl-auto align-self-xl-center no-print">
-            <button type="button" id="print-report" class="btn btn-success d-inline-flex align-items-center justify-content-center">
+            <button type="button" id="print-report" class="btn btn-success d-inline-flex align-items-center justify-content-center" data-print-page aria-label="Print reports dashboard">
                 <i class="fa-solid fa-print me-2"></i>Print dashboard
             </button>
         </div>
@@ -168,10 +168,6 @@
 
 @push('scripts')
 <script>
-    document.getElementById('print-report')?.addEventListener('click', () => {
-        window.print();
-    });
-
     const reportChartDefaults = {
         responsive: true,
         maintainAspectRatio: false,

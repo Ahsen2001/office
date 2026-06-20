@@ -30,7 +30,7 @@
 
 @section('content')
     <div class="no-print mb-3">
-        <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> Print Card</button>
+        <button type="button" class="btn btn-primary" data-print-page aria-label="Print person card"><i class="fa-solid fa-print me-1"></i> Print Card</button>
         <a class="btn btn-light" href="{{ route('staff.people.show', $person) }}">Back to profile</a>
     </div>
 

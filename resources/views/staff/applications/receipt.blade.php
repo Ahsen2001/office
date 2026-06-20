@@ -3,7 +3,7 @@
 @section('page-title', 'Application Receipt')
 @push('styles')<style>@media print{.admin-sidebar,.admin-topbar,.no-print{display:none!important}.admin-main{margin-left:0!important}.receipt{box-shadow:none!important;border:1px solid #ddd}}</style>@endpush
 @section('content')
-<div class="no-print mb-3"><button onclick="window.print()" class="btn btn-primary">Print Receipt</button> <a href="{{ route('staff.applications.show', $application) }}" class="btn btn-light">Back</a></div>
+<div class="no-print mb-3"><button type="button" class="btn btn-primary" data-print-page aria-label="Print application receipt">Print Receipt</button> <a href="{{ route('staff.applications.show', $application) }}" class="btn btn-light">Back</a></div>
 <div class="card soft-card receipt"><div class="card-body p-4">
     <h1 class="h4">Office Service Application Receipt</h1>
     <hr>
